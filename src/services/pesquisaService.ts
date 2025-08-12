@@ -179,15 +179,15 @@ class PesquisaService {
         data: {
           total,
           hoje,
-          satisfacao: satisfacao.map(s => ({
+          satisfacao: satisfacao.map((s: any) => ({
             satisfacao: s.satisfacao,
             quantidade: s._count.satisfacao
           })),
-          bairros: bairros.map(b => ({
+          bairros: bairros.map((b: any) => ({
             bairro: b.bairro,
             quantidade: b._count.bairro
           })),
-          interesse: interesse.map(i => ({
+          interesse: interesse.map((i: any) => ({
             interesse_proposta: i.interesse_proposta,
             quantidade: i._count.interesse_proposta
           }))
