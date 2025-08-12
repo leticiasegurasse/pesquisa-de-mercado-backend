@@ -1,0 +1,170 @@
+{
+	"info": {
+		"_postman_id": "pesquisa-mercado-api",
+		"name": "Pesquisa Mercado API",
+		"description": "API para gerenciamento de pesquisas de mercado de provedores de internet",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "12345678"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/health",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"health"
+					]
+				},
+				"description": "Verifica se a API está funcionando corretamente"
+			},
+			"response": []
+		},
+		{
+			"name": "Pesquisas",
+			"item": [
+				{
+					"name": "Criar Nova Pesquisa",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"João Silva\",\n  \"whatsapp\": \"(11) 99999-9999\",\n  \"provedor_atual\": \"Vivo\",\n  \"satisfacao\": \"Satisfeito\",\n  \"bairro\": \"Centro\",\n  \"velocidade\": \"100 Mbps\",\n  \"valor_mensal\": \"R$ 89,90\",\n  \"uso_internet\": \"Trabalho, Netflix, jogos online\",\n  \"interesse_proposta\": \"Sim, tenho interesse\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/pesquisas",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"pesquisas"
+							]
+						},
+						"description": "Cria uma nova pesquisa de mercado"
+					},
+					"response": []
+				},
+				{
+					"name": "Listar Todas as Pesquisas",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/pesquisas",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"pesquisas"
+							]
+						},
+						"description": "Retorna todas as pesquisas cadastradas"
+					},
+					"response": []
+				},
+				{
+					"name": "Buscar Pesquisa por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/pesquisas/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"pesquisas",
+								"1"
+							]
+						},
+						"description": "Busca uma pesquisa específica pelo ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Buscar Pesquisas por Bairro",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/pesquisas/bairro/Centro",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"pesquisas",
+								"bairro",
+								"Centro"
+							]
+						},
+						"description": "Busca pesquisas por bairro específico"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints para gerenciamento de pesquisas"
+		},
+		{
+			"name": "Estatísticas",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/estatisticas",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"estatisticas"
+					]
+				},
+				"description": "Retorna estatísticas das pesquisas (total, por satisfação, por interesse, etc.)"
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3001",
+			"type": "string"
+		}
+	]
+}
