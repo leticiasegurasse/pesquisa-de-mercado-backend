@@ -1,24 +1,24 @@
-// Importar tipos do Prisma
-import { PesquisaMercado, Satisfacao, InteresseProposta } from '@prisma/client';
+// Tipos para a aplicação
+export interface PesquisaMercado {
+  id: number;
+  nome: string;
+  whatsapp: string;
+  provedor_atual: string;
+  satisfacao: string;
+  bairro: string;
+  velocidade?: string;
+  valor_mensal: string;
+  uso_internet: string;
+  interesse_proposta: string;
+  created_at: Date;
+  updated_at: Date;
+}
 
-// Re-exportar tipos do Prisma
-export type { PesquisaMercado, Satisfacao, InteresseProposta };
+export type Satisfacao = 'Muito satisfeito' | 'Satisfeito' | 'Insatisfeito' | 'Muito insatisfeito';
+export type InteresseProposta = 'Sim, tenho interesse' | 'Não tenho interesse';
 
 // Tipo para criação de pesquisa (sem ID e timestamps)
 export type CreatePesquisaInput = Omit<PesquisaMercado, 'id' | 'created_at' | 'updated_at'>;
-
-// Mapeamento de strings para enums
-export const SATISFACAO_MAP = {
-  'Muito satisfeito': 'MUITO_SATISFEITO' as const,
-  'Satisfeito': 'SATISFEITO' as const,
-  'Insatisfeito': 'INSATISFEITO' as const,
-  'Muito insatisfeito': 'MUITO_INSATISFEITO' as const,
-} as const;
-
-export const INTERESSE_MAP = {
-  'Sim, tenho interesse': 'SIM_INTERESSE' as const,
-  'Não tenho interesse': 'NAO_INTERESSE' as const,
-} as const;
 
 // Tipos para a API Evolution
 export interface EvolutionMessage {

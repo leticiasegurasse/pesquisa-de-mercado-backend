@@ -9,12 +9,7 @@
     "start": "node dist/server.js",
     "test": "jest",
     "lint": "eslint src/**/*.ts",
-    "lint:fix": "eslint src/**/*.ts --fix",
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push",
-    "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio",
-    "db:seed": "ts-node prisma/seed.ts"
+    "lint:fix": "eslint src/**/*.ts --fix"
   },
   "keywords": ["nodejs", "typescript", "express", "postgresql", "whatsapp"],
   "author": "G2 Telecom",
@@ -29,10 +24,7 @@
     "express-rate-limit": "^7.1.5",
     "compression": "^1.7.4",
     "morgan": "^1.10.0",
-    "@prisma/client": "^5.7.1"
-  },
-  "prisma": {
-    "seed": "ts-node prisma/seed.ts"
+    "pg": "^8.11.3"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
@@ -40,12 +32,12 @@
     "@types/compression": "^1.7.5",
     "@types/morgan": "^1.9.9",
     "@types/node": "^20.8.10",
+    "@types/pg": "^8.10.9",
     "@typescript-eslint/eslint-plugin": "^6.9.1",
     "@typescript-eslint/parser": "^6.9.1",
     "eslint": "^8.53.0",
     "nodemon": "^3.0.1",
     "ts-node": "^10.9.1",
-    "typescript": "^5.2.2",
-    "prisma": "^5.7.1"
+    "typescript": "^5.2.2"
   }
 }

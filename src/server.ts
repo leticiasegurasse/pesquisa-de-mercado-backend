@@ -8,7 +8,7 @@ import dotenv from 'dotenv';
 
 // Importações locais
 import pesquisaRoutes from './routes/pesquisaRoutes';
-import { testConnection, prisma } from './lib/prisma';
+import { testConnection, createTables } from './config/database';
 import evolutionService from './services/evolutionService';
 
 // Carregar variáveis de ambiente
@@ -118,7 +118,7 @@ async function startServer() {
 
     // Verificar se o banco está sincronizado
     console.log('🔧 Verificando sincronização do banco...');
-    await prisma.$executeRaw`SELECT 1`;
+    await createTables(); // Criar tabelas se não existirem
 
     // Verificar status da Evolution API
     console.log('📱 Verificando status da Evolution API...');

@@ -1,27 +1,48 @@
-import prisma from '../lib/prisma';
+import pool from '../config/database';
 import evolutionService from './evolutionService';
-import { CreatePesquisaInput, ApiResponse, SATISFACAO_MAP, INTERESSE_MAP } from '../types';
+import { CreatePesquisaInput, ApiResponse, PesquisaMercado } from '../types';
 
 class PesquisaService {
   // Criar nova pesquisa
   async createPesquisa(pesquisa: CreatePesquisaInput): Promise<ApiResponse> {
     try {
-      // Converter strings para enums do Prisma
-      const pesquisaData = {
-        nome: pesquisa.nome,
-        whatsapp: pesquisa.whatsapp,
-        provedor_atual: pesquisa.provedor_atual,
-        satisfacao: SATISFACAO_MAP[pesquisa.satisfacao as keyof typeof SATISFACAO_MAP],
-        bairro: pesquisa.bairro,
-        velocidade: pesquisa.velocidade,
-        valor_mensal: pesquisa.valor_mensal,
-        uso_internet: pesquisa.uso_internet,
-        interesse_proposta: INTERESSE_MAP[pesquisa.interesse_proposta as keyof typeof INTERESSE_MAP],
-      };
+      const client = await pool.connect();
+      
+      // Verificar se WhatsApp já existe
+      const existingWhatsApp = await client.query(
+        'SELECT id FROM pesquisas_mercado WHERE whatsapp = $1',
+        [pesquisa.whatsapp]
+      );
 
-      const novaPesquisa = await prisma.pesquisaMercado.create({
-        data: pesquisaData
-      });
+      if (existingWhatsApp.rows.length > 0) {
+        client.release();
+        return {
+          success: false,
+          message: 'WhatsApp já cadastrado em outra pesquisa'
+        };
+      }
+
+      // Inserir nova pesquisa
+      const result = await client.query(`
+        INSERT INTO pesquisas_mercado (
+          nome, whatsapp, provedor_atual, satisfacao, bairro, 
+          velocidade, valor_mensal, uso_internet, interesse_proposta
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING *
+      `, [
+        pesquisa.nome,
+        pesquisa.whatsapp,
+        pesquisa.provedor_atual,
+        pesquisa.satisfacao,
+        pesquisa.bairro,
+        pesquisa.velocidade,
+        pesquisa.valor_mensal,
+        pesquisa.uso_internet,
+        pesquisa.interesse_proposta
+      ]);
+
+      const novaPesquisa = result.rows[0];
+      client.release();
 
       // Enviar notificação via WhatsApp
       try {
@@ -52,16 +73,17 @@ class PesquisaService {
   // Buscar todas as pesquisas
   async getAllPesquisas(): Promise<ApiResponse> {
     try {
-      const pesquisas = await prisma.pesquisaMercado.findMany({
-        orderBy: {
-          created_at: 'desc'
-        }
-      });
+      const client = await pool.connect();
+      const result = await client.query(`
+        SELECT * FROM pesquisas_mercado 
+        ORDER BY created_at DESC
+      `);
+      client.release();
       
       return {
         success: true,
         message: 'Pesquisas encontradas',
-        data: pesquisas
+        data: result.rows
       };
     } catch (error: any) {
       console.error('❌ Erro ao buscar pesquisas:', error);
@@ -77,11 +99,14 @@ class PesquisaService {
   // Buscar pesquisa por ID
   async getPesquisaById(id: number): Promise<ApiResponse> {
     try {
-      const pesquisa = await prisma.pesquisaMercado.findUnique({
-        where: { id }
-      });
+      const client = await pool.connect();
+      const result = await client.query(
+        'SELECT * FROM pesquisas_mercado WHERE id = $1',
+        [id]
+      );
+      client.release();
       
-      if (!pesquisa) {
+      if (result.rows.length === 0) {
         return {
           success: false,
           message: 'Pesquisa não encontrada'
@@ -91,7 +116,7 @@ class PesquisaService {
       return {
         success: true,
         message: 'Pesquisa encontrada',
-        data: pesquisa
+        data: result.rows[0]
       };
     } catch (error: any) {
       console.error('❌ Erro ao buscar pesquisa:', error);
@@ -107,22 +132,18 @@ class PesquisaService {
   // Buscar pesquisas por bairro
   async getPesquisasByBairro(bairro: string): Promise<ApiResponse> {
     try {
-      const pesquisas = await prisma.pesquisaMercado.findMany({
-        where: {
-          bairro: {
-            contains: bairro,
-            mode: 'insensitive'
-          }
-        },
-        orderBy: {
-          created_at: 'desc'
-        }
-      });
+      const client = await pool.connect();
+      const result = await client.query(`
+        SELECT * FROM pesquisas_mercado 
+        WHERE LOWER(bairro) LIKE LOWER($1)
+        ORDER BY created_at DESC
+      `, [`%${bairro}%`]);
+      client.release();
       
       return {
         success: true,
         message: 'Pesquisas encontradas',
-        data: pesquisas
+        data: result.rows
       };
     } catch (error: any) {
       console.error('❌ Erro ao buscar pesquisas por bairro:', error);
@@ -138,40 +159,43 @@ class PesquisaService {
   // Obter estatísticas
   async getEstatisticas(): Promise<ApiResponse> {
     try {
-      const [total, hoje, satisfacao, bairros, interesse] = await Promise.all([
-        prisma.pesquisaMercado.count(),
-        prisma.pesquisaMercado.count({
-          where: {
-            created_at: {
-              gte: new Date(new Date().setHours(0, 0, 0, 0))
-            }
-          }
-        }),
-        prisma.pesquisaMercado.groupBy({
-          by: ['satisfacao'],
-          _count: {
-            satisfacao: true
-          }
-        }),
-        prisma.pesquisaMercado.groupBy({
-          by: ['bairro'],
-          _count: {
-            bairro: true
-          },
-          orderBy: {
-            _count: {
-              bairro: 'desc'
-            }
-          },
-          take: 10
-        }),
-        prisma.pesquisaMercado.groupBy({
-          by: ['interesse_proposta'],
-          _count: {
-            interesse_proposta: true
-          }
-        })
-      ]);
+      const client = await pool.connect();
+      
+      // Total de pesquisas
+      const totalResult = await client.query('SELECT COUNT(*) as total FROM pesquisas_mercado');
+      const total = parseInt(totalResult.rows[0].total);
+
+      // Pesquisas de hoje
+      const hojeResult = await client.query(`
+        SELECT COUNT(*) as hoje FROM pesquisas_mercado 
+        WHERE DATE(created_at) = CURRENT_DATE
+      `);
+      const hoje = parseInt(hojeResult.rows[0].hoje);
+
+      // Estatísticas por satisfação
+      const satisfacaoResult = await client.query(`
+        SELECT satisfacao, COUNT(*) as quantidade 
+        FROM pesquisas_mercado 
+        GROUP BY satisfacao
+      `);
+
+      // Top 10 bairros
+      const bairrosResult = await client.query(`
+        SELECT bairro, COUNT(*) as quantidade 
+        FROM pesquisas_mercado 
+        GROUP BY bairro 
+        ORDER BY quantidade DESC 
+        LIMIT 10
+      `);
+
+      // Estatísticas por interesse
+      const interesseResult = await client.query(`
+        SELECT interesse_proposta, COUNT(*) as quantidade 
+        FROM pesquisas_mercado 
+        GROUP BY interesse_proposta
+      `);
+
+      client.release();
 
       return {
         success: true,
@@ -179,18 +203,9 @@ class PesquisaService {
         data: {
           total,
           hoje,
-          satisfacao: satisfacao.map((s: any) => ({
-            satisfacao: s.satisfacao,
-            quantidade: s._count.satisfacao
-          })),
-          bairros: bairros.map((b: any) => ({
-            bairro: b.bairro,
-            quantidade: b._count.bairro
-          })),
-          interesse: interesse.map((i: any) => ({
-            interesse_proposta: i.interesse_proposta,
-            quantidade: i._count.interesse_proposta
-          }))
+          satisfacao: satisfacaoResult.rows,
+          bairros: bairrosResult.rows,
+          interesse: interesseResult.rows
         }
       };
     } catch (error: any) {
@@ -207,10 +222,13 @@ class PesquisaService {
   // Verificar se WhatsApp já foi usado
   async checkWhatsAppExists(whatsapp: string): Promise<boolean> {
     try {
-      const count = await prisma.pesquisaMercado.count({
-        where: { whatsapp }
-      });
-      return count > 0;
+      const client = await pool.connect();
+      const result = await client.query(
+        'SELECT COUNT(*) as count FROM pesquisas_mercado WHERE whatsapp = $1',
+        [whatsapp]
+      );
+      client.release();
+      return parseInt(result.rows[0].count) > 0;
     } catch (error) {
       console.error('❌ Erro ao verificar WhatsApp:', error);
       return false;
