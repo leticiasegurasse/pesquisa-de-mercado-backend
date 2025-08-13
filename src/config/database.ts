@@ -10,7 +10,7 @@ const sequelize = new Sequelize({
   database: process.env.DB_NAME || 'pesquisa_mercado',
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || '',
-  logging: process.env.NODE_ENV === 'development' ? console.log : false,
+  logging: process.env.DB_LOGGING === 'true' ? console.log : false, // Logs SQL apenas quando DB_LOGGING=true
   pool: {
     max: 5,
     min: 0,
