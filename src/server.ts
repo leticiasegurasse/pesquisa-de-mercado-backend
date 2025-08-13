@@ -1,159 +1,90 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import compression from 'compression';
-import morgan from 'morgan';
-import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
-
-// Importações locais
-import pesquisaRoutes from './routes/pesquisaRoutes';
-import { testConnection, createTables } from './config/database';
-import evolutionService from './services/evolutionService';
+import { testConnection, syncDatabase } from './config/database';
+import authRoutes from './routes/auth';
 
 // Carregar variáveis de ambiente
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
-// Configuração de rate limiting
-const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutos
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'), // máximo 100 requisições por janela
-  message: {
-    success: false,
-    message: 'Muitas requisições. Tente novamente em alguns minutos.'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-// Middlewares de segurança e performance
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
-    },
-  },
-}));
-
-app.use(compression());
-app.use(limiter);
+// Middlewares de segurança
+app.use(helmet());
 
 // Configuração do CORS
-const corsOptions = {
-  origin: [
-    'http://localhost:5173',
-    'http://localhost:5174',
-    'http://127.0.0.1:5173',
-    'http://127.0.0.1:5174'
-  ],
-  credentials: true,
-  optionsSuccessStatus: 200
-};
-app.use(cors(corsOptions));
-
-// Middleware de logging
-if (process.env.NODE_ENV === 'development') {
-  app.use(morgan('dev'));
-} else {
-  app.use(morgan('combined'));
-}
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  credentials: true
+}));
 
 // Middleware para parsing de JSON
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Middleware de tratamento de erros global
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('❌ Erro não tratado:', err);
-  res.status(500).json({
-    success: false,
-    message: 'Erro interno do servidor',
-    error: process.env.NODE_ENV === 'development' ? err.message : 'Algo deu errado'
-  });
+// Middleware de logging
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
 });
 
 // Rotas
-app.use('/api', pesquisaRoutes);
+app.use('/api/auth', authRoutes);
 
-// Rota raiz
-app.get('/', (req, res) => {
-  res.json({
+// Rota de teste
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
     success: true,
-    message: 'API de Pesquisa de Mercado - G2 Telecom',
-    version: '1.0.0',
-    endpoints: {
-      health: '/api/health',
-      pesquisas: '/api/pesquisas',
-      estatisticas: '/api/estatisticas'
-    }
+    message: 'Servidor funcionando corretamente',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
-// Rota 404
-app.use('*', (req, res) => {
-  res.status(404).json({
+// Middleware de tratamento de erros
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('Erro não tratado:', err);
+  
+  res.status(err.status || 500).json({
     success: false,
-    message: 'Endpoint não encontrado',
-    path: req.originalUrl
+    message: err.message || 'Erro interno do servidor',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
 });
+
 
 // Função para inicializar o servidor
-async function startServer() {
+const startServer = async (): Promise<void> => {
   try {
-    // Testar conexão com o banco
-    console.log('🔍 Testando conexão com o banco de dados...');
-    const dbConnected = await testConnection();
+    // Testar conexão com o banco de dados
+    await testConnection();
     
-    if (!dbConnected) {
-      console.error('❌ Falha na conexão com o banco de dados');
-      process.exit(1);
-    }
-
-    // Verificar se o banco está sincronizado
-    console.log('🔧 Verificando sincronização do banco...');
-    await createTables(); // Criar tabelas se não existirem
-
-    // Verificar status da Evolution API
-    console.log('📱 Verificando status da Evolution API...');
-    const evolutionStatus = await evolutionService.checkInstanceStatus();
-    if (evolutionStatus.success) {
-      console.log('✅ Evolution API conectada');
-    } else {
-      console.warn('⚠️ Evolution API não está disponível:', evolutionStatus.error);
-    }
-
+    // Sincronizar modelos com o banco de dados
+    await syncDatabase();
+    
     // Iniciar servidor
     app.listen(PORT, () => {
-      console.log(`
-🚀 Servidor iniciado com sucesso!
-📍 Porta: ${PORT}
-🌍 Ambiente: ${process.env.NODE_ENV || 'development'}
-📊 API: http://localhost:${PORT}
-🔍 Health Check: http://localhost:${PORT}/api/health
-      `);
+      console.log(`🚀 Servidor rodando na porta ${PORT}`);
+      console.log(`📊 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🔗 URL: http://localhost:${PORT}`);
+      console.log(`📋 Health Check: http://localhost:${PORT}/api/health`);
     });
-
   } catch (error) {
     console.error('❌ Erro ao inicializar servidor:', error);
     process.exit(1);
   }
-}
+};
 
-// Tratamento de sinais para graceful shutdown
+// Tratamento de sinais para encerramento graceful
 process.on('SIGTERM', () => {
-  console.log('🛑 SIGTERM recebido. Encerrando servidor...');
+  console.log('🛑 Recebido SIGTERM, encerrando servidor...');
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
-  console.log('🛑 SIGINT recebido. Encerrando servidor...');
+  console.log('🛑 Recebido SIGINT, encerrando servidor...');
   process.exit(0);
 });
 

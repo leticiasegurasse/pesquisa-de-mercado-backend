@@ -1,50 +1,26 @@
 # Backend - Pesquisa de Mercado
 
-Backend completo para o sistema de pesquisa de mercado da G2 Telecom, desenvolvido com Node.js, TypeScript, Express e PostgreSQL, com integração à API Evolution para envio de mensagens WhatsApp.
+Backend Node.js com TypeScript, Express, PostgreSQL e JWT para autenticação.
 
-## 🚀 Tecnologias
+## 🚀 Tecnologias Utilizadas
 
 - **Node.js** - Runtime JavaScript
 - **TypeScript** - Linguagem de programação
 - **Express** - Framework web
 - **PostgreSQL** - Banco de dados
-- **Prisma ORM** - ORM para TypeScript
-- **Evolution API** - Integração WhatsApp
-- **Joi** - Validação de dados
+- **Sequelize** - ORM
+- **JWT** - Autenticação
+- **bcrypt** - Hash de senhas
 - **Helmet** - Segurança
-- **CORS** - Cross-origin resource sharing
-- **Morgan** - Logging
-- **Rate Limiting** - Proteção contra spam
+- **CORS** - Cross-Origin Resource Sharing
 
-## 📁 Estrutura do Projeto
+## 📋 Pré-requisitos
 
-```
-backend/
-├── src/
-│   ├── lib/
-│   │   └── prisma.ts            # Cliente Prisma
-│   ├── controllers/
-│   │   └── pesquisaController.ts # Controladores da API
-│   ├── middleware/
-│   │   └── validation.ts        # Validação com Joi
-│   ├── routes/
-│   │   └── pesquisaRoutes.ts    # Rotas da API
-│   ├── services/
-│   │   ├── evolutionService.ts  # Serviço WhatsApp
-│   │   └── pesquisaService.ts   # Lógica de negócio
-│   ├── types/
-│   │   └── index.ts             # Tipos TypeScript
-│   └── server.ts                # Servidor principal
-├── prisma/
-│   ├── schema.prisma            # Schema do banco
-│   └── seed.ts                  # Dados de exemplo
-├── package.json
-├── tsconfig.json
-├── env.example
-└── README.md
-```
+- Node.js (versão 16 ou superior)
+- PostgreSQL instalado e rodando
+- npm ou yarn
 
-## 🛠️ Instalação
+## 🔧 Instalação
 
 1. **Clone o repositório**
 ```bash
@@ -58,62 +34,41 @@ npm install
 ```
 
 3. **Configure as variáveis de ambiente**
-```bash
-cp env.example .env
-```
+   
+   Copie o arquivo `config.env` e renomeie para `.env`, então configure suas variáveis:
 
-4. **Configure o arquivo .env**
-```env
+```bash
 # Configurações do Servidor
-PORT=3001
+PORT=3000
 NODE_ENV=development
 
-# Configurações do Banco de Dados PostgreSQL
-DATABASE_URL="postgresql://postgres:sua_senha_aqui@localhost:5432/pesquisa_mercado?schema=public"
+# Configurações do PostgreSQL (VPS Hostinger)
+DB_HOST=seu_host_postgres
+DB_PORT=5432
+DB_NAME=seu_nome_banco
+DB_USER=seu_usuario
+DB_PASSWORD=sua_senha
 
-# Configurações da API Evolution (WhatsApp)
-EVOLUTION_API_URL=https://sua-instancia.evolution-api.com
-EVOLUTION_API_KEY=sua_api_key_aqui
-EVOLUTION_INSTANCE=sua_instancia_aqui
+# Configurações JWT
+JWT_SECRET=sua_chave_secreta_jwt_muito_segura
+JWT_EXPIRES_IN=24h
 
-# WhatsApp da empresa para receber notificações
-EMPRESA_WHATSAPP=5511999999999
-
-# Configurações de Segurança
-JWT_SECRET=seu_jwt_secret_aqui
-CORS_ORIGIN=http://localhost:5174
-
-# Configurações de Rate Limiting
-RATE_LIMIT_WINDOW_MS=900000
-RATE_LIMIT_MAX_REQUESTS=100
+# Configurações de CORS
+CORS_ORIGIN=http://localhost:3000
 ```
 
-5. **Configure o PostgreSQL**
+## 🗄️ Configuração do Banco de Dados
+
+1. **Crie um banco de dados PostgreSQL**
 ```sql
--- Criar banco de dados
 CREATE DATABASE pesquisa_mercado;
-
--- Criar usuário (opcional)
-CREATE USER pesquisa_user WITH PASSWORD 'sua_senha';
-GRANT ALL PRIVILEGES ON DATABASE pesquisa_mercado TO pesquisa_user;
 ```
 
-6. **Configure o Prisma**
-```bash
-# Gerar cliente Prisma
-npm run db:generate
+2. **Configure as credenciais no arquivo .env**
 
-# Sincronizar schema com o banco
-npm run db:push
+3. **O Sequelize criará as tabelas automaticamente na primeira execução**
 
-# (Opcional) Criar migration
-npm run db:migrate
-
-# (Opcional) Popular com dados de exemplo
-npm run db:seed
-```
-
-## 🚀 Executando o Projeto
+## 🏃‍♂️ Executando o Projeto
 
 ### Desenvolvimento
 ```bash
@@ -126,185 +81,186 @@ npm run build
 npm start
 ```
 
-### Outros comandos
-```bash
-npm run lint          # Verificar código
-npm run lint:fix      # Corrigir problemas de lint
-npm test             # Executar testes
-npm run db:studio    # Abrir Prisma Studio
+## 📡 Endpoints da API
+
+### Autenticação
+
+#### POST `/api/auth/register`
+Registra um novo usuário.
+
+**Body:**
+```json
+{
+  "name": "João Silva",
+  "email": "joao@email.com",
+  "password": "123456",
+  "role": "user"
+}
 ```
 
-## 📊 Endpoints da API
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Usuário criado com sucesso",
+  "data": {
+    "user": {
+      "id": 1,
+      "name": "João Silva",
+      "email": "joao@email.com",
+      "role": "user",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  }
+}
+```
+
+#### POST `/api/auth/login`
+Faz login do usuário.
+
+**Body:**
+```json
+{
+  "email": "joao@email.com",
+  "password": "123456"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Login realizado com sucesso",
+  "data": {
+    "user": {
+      "id": 1,
+      "name": "João Silva",
+      "email": "joao@email.com",
+      "role": "user",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  }
+}
+```
+
+#### GET `/api/auth/profile`
+Obtém o perfil do usuário autenticado.
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": 1,
+      "name": "João Silva",
+      "email": "joao@email.com",
+      "role": "user",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    }
+  }
+}
+```
 
 ### Health Check
-```
-GET /api/health
-```
 
-### Pesquisas
-```
-POST   /api/pesquisas                    # Criar nova pesquisa
-GET    /api/pesquisas                    # Listar todas as pesquisas
-GET    /api/pesquisas/:id                # Buscar pesquisa por ID
-GET    /api/pesquisas/bairro/:bairro     # Buscar pesquisas por bairro
-```
+#### GET `/api/health`
+Verifica se o servidor está funcionando.
 
-### Estatísticas
-```
-GET    /api/estatisticas                 # Obter estatísticas gerais
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Servidor funcionando corretamente",
+  "timestamp": "2024-01-01T00:00:00.000Z",
+  "environment": "development"
+}
 ```
 
-## 📝 Exemplo de Uso
+## 🔐 Autenticação
 
-### Criar Nova Pesquisa
-```bash
-curl -X POST http://localhost:3001/api/pesquisas \
-  -H "Content-Type: application/json" \
-  -d '{
-    "nome": "João Silva",
-    "whatsapp": "(11) 99999-9999",
-    "provedor_atual": "Vivo",
-    "satisfacao": "Satisfeito",
-    "bairro": "Centro",
-    "velocidade": "100 Mbps",
-    "valor_mensal": "R$ 89,90",
-    "uso_internet": "Trabalho, Netflix, jogos",
-    "interesse_proposta": "Sim, tenho interesse"
-  }'
+O sistema usa JWT (JSON Web Tokens) para autenticação. Para acessar rotas protegidas, inclua o token no header:
+
 ```
-
-### Obter Estatísticas
-```bash
-curl http://localhost:3001/api/estatisticas
-```
-
-## 🔧 Configuração da Evolution API
-
-1. **Instale a Evolution API** seguindo a documentação oficial
-2. **Configure uma instância** do WhatsApp
-3. **Obtenha a API Key** e URL da instância
-4. **Configure as variáveis de ambiente** no arquivo .env
-
-### Exemplo de configuração Evolution API:
-```env
-EVOLUTION_API_URL=http://localhost:8080
-EVOLUTION_API_KEY=sua_api_key_aqui
-EVOLUTION_INSTANCE=sua_instancia_aqui
-EMPRESA_WHATSAPP=5511999999999
+Authorization: Bearer <seu_token_jwt>
 ```
 
 ## 🛡️ Segurança
 
-- **Helmet** - Headers de segurança
-- **Rate Limiting** - Proteção contra spam
-- **CORS** - Controle de origem
-- **Validação** - Validação de entrada com Joi
-- **SQL Injection** - Proteção com prepared statements
+- Senhas são hasheadas com bcrypt
+- Headers de segurança com Helmet
+- CORS configurado
+- Validação de entrada
+- Tratamento de erros centralizado
 
-## 📊 Banco de Dados
+## 📁 Estrutura do Projeto
 
-### Prisma ORM
-O projeto utiliza o **Prisma ORM** para gerenciar o banco de dados, oferecendo:
-
-- **Type Safety** - Tipos TypeScript automáticos
-- **Migrations** - Controle de versão do banco
-- **Query Builder** - API intuitiva para consultas
-- **Studio** - Interface visual para o banco
-- **Auto-complete** - IntelliSense completo
-
-### Modelo: PesquisaMercado
-```prisma
-model PesquisaMercado {
-  id                  Int      @id @default(autoincrement())
-  nome                String   @db.VarChar(255)
-  whatsapp            String   @unique @db.VarChar(20)
-  provedor_atual      String   @db.VarChar(255)
-  satisfacao          Satisfacao
-  bairro              String   @db.VarChar(255)
-  velocidade          String?  @db.VarChar(100)
-  valor_mensal        String   @db.VarChar(100)
-  uso_internet        String   @db.Text
-  interesse_proposta  InteresseProposta
-  created_at          DateTime @default(now())
-  updated_at          DateTime @updatedAt
-
-  @@map("pesquisas_mercado")
-}
+```
+src/
+├── config/
+│   └── database.ts          # Configuração do banco de dados
+├── controllers/
+│   └── authController.ts    # Controllers de autenticação
+├── middleware/
+│   └── auth.ts             # Middleware de autenticação
+├── models/
+│   └── User.ts             # Modelo de usuário
+├── routes/
+│   └── auth.ts             # Rotas de autenticação
+├── utils/
+│   └── jwt.ts              # Utilitários JWT
+└── server.ts               # Arquivo principal do servidor
 ```
 
-### Enums
-```prisma
-enum Satisfacao {
-  MUITO_SATISFEITO    @map("Muito satisfeito")
-  SATISFEITO          @map("Satisfeito")
-  INSATISFEITO        @map("Insatisfeito")
-  MUITO_INSATISFEITO  @map("Muito insatisfeito")
-}
+## 🧪 Testando a API
 
-enum InteresseProposta {
-  SIM_INTERESSE       @map("Sim, tenho interesse")
-  NAO_INTERESSE       @map("Não tenho interesse")
-}
-```
+Você pode usar ferramentas como:
+- **Postman**
+- **Insomnia**
+- **Thunder Client** (VS Code)
+- **curl**
 
-### Comandos Prisma
+### Exemplo com curl:
+
 ```bash
-# Gerar cliente
-npm run db:generate
+# Health check
+curl http://localhost:3000/api/health
 
-# Sincronizar schema
-npm run db:push
+# Registrar usuário
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Teste","email":"teste@email.com","password":"123456"}'
 
-# Criar migration
-npm run db:migrate
+# Login
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"teste@email.com","password":"123456"}'
 
-# Abrir Prisma Studio
-npm run db:studio
-
-# Popular dados
-npm run db:seed
+# Obter perfil (com token)
+curl -X GET http://localhost:3000/api/auth/profile \
+  -H "Authorization: Bearer <seu_token>"
 ```
 
-## 🔍 Monitoramento
+## 🚀 Próximos Passos
 
-### Logs
-- **Morgan** - Logs de requisições HTTP
-- **Console** - Logs de aplicação
-- **Error Handling** - Tratamento de erros global
+- [ ] Adicionar validação com Joi ou Zod
+- [ ] Implementar refresh tokens
+- [ ] Adicionar rate limiting
+- [ ] Implementar logs estruturados
+- [ ] Adicionar testes unitários
+- [ ] Configurar CI/CD
+- [ ] Adicionar documentação com Swagger
 
-### Health Check
-```bash
-curl http://localhost:3001/api/health
-```
+## 📝 Licença
 
-## 🚀 Deploy
-
-### Docker (opcional)
-```dockerfile
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-COPY dist ./dist
-EXPOSE 3001
-CMD ["node", "dist/server.js"]
-```
-
-### Variáveis de Produção
-```env
-NODE_ENV=production
-PORT=3001
-DB_HOST=seu_host_producao
-DB_PASSWORD=sua_senha_producao
-EVOLUTION_API_URL=sua_url_producao
-```
-
-## 📞 Suporte
-
-Para dúvidas ou problemas:
-- Abra uma issue no repositório
-- Entre em contato com a equipe de desenvolvimento
-
-## 📄 Licença
-
-Este projeto é propriedade da G2 Telecom.
+Este projeto está sob a licença ISC.
