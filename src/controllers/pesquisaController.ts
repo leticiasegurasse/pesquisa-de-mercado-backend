@@ -4,6 +4,24 @@ import sequelize from '../config/database';
 import Pesquisa from '../models/Pesquisa';
 import whatsappService from '../services/whatsappService';
 
+// Função auxiliar para verificar se WhatsApp já existe
+const verificarWhatsAppExistente = async (whatsapp: string): Promise<boolean> => {
+  const whatsappNormalizado = whatsapp.replace(/\D/g, '');
+  
+  const pesquisaExistente = await Pesquisa.findOne({
+    where: {
+      whatsapp: {
+        [Op.or]: [
+          whatsapp,
+          { [Op.iLike]: `%${whatsappNormalizado}%` }
+        ]
+      }
+    }
+  });
+  
+  return !!pesquisaExistente;
+};
+
 // Criar nova pesquisa
 export const criarPesquisa = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -24,6 +42,18 @@ export const criarPesquisa = async (req: Request, res: Response): Promise<void> 
       res.status(400).json({
         success: false,
         message: 'Todos os campos obrigatórios devem ser preenchidos'
+      });
+      return;
+    }
+
+    // Verificar se o WhatsApp já foi cadastrado
+    const whatsappJaExiste = await verificarWhatsAppExistente(whatsapp);
+    
+    if (whatsappJaExiste) {
+      res.status(409).json({
+        success: false,
+        message: 'Este número de WhatsApp já foi cadastrado em uma pesquisa anterior. Cada número pode participar apenas uma vez.',
+        error: 'WHATSAPP_DUPLICATE'
       });
       return;
     }
@@ -185,6 +215,40 @@ export const buscarPesquisasPorBairro = async (req: Request, res: Response): Pro
     });
   } catch (error) {
     console.error('Erro ao buscar pesquisas por bairro:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+};
+
+// Verificar se WhatsApp já existe
+export const verificarWhatsApp = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { whatsapp } = req.params;
+    
+    if (!whatsapp) {
+      res.status(400).json({
+        success: false,
+        message: 'Número de WhatsApp é obrigatório'
+      });
+      return;
+    }
+    
+    const jaExiste = await verificarWhatsAppExistente(whatsapp);
+    
+    res.status(200).json({
+      success: true,
+      data: {
+        whatsapp,
+        jaExiste,
+        message: jaExiste 
+          ? 'Este número já foi cadastrado em uma pesquisa anterior'
+          : 'Número disponível para cadastro'
+      }
+    });
+  } catch (error: any) {
+    console.error('Erro ao verificar WhatsApp:', error);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
