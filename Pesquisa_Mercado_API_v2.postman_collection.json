@@ -1,0 +1,433 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+		"name": "Pesquisa de Mercado API v2",
+		"description": "API completa para o sistema de pesquisa de mercado com autenticação JWT e CRUD de pesquisas",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "12345678"
+	},
+	"item": [
+		{
+			"name": "🏥 Health Check",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"health"
+							]
+						},
+						"description": "Verificar se o servidor está funcionando"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints para verificar o status do servidor"
+		},
+		{
+			"name": "🔐 Autenticação",
+			"item": [
+				{
+					"name": "Registrar Usuário",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Administrador\",\n  \"email\": \"admin@exemplo.com\",\n  \"password\": \"123456\",\n  \"role\": \"admin\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						},
+						"description": "Registrar novo usuário no sistema"
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.data && response.data.token) {",
+									"        pm.environment.set('auth_token', response.data.token);",
+									"        pm.environment.set('refresh_token', response.data.refreshToken);",
+									"        console.log('Token salvo:', response.data.token);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@exemplo.com\",\n  \"password\": \"123456\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Fazer login e obter token JWT"
+					},
+					"response": []
+				},
+				{
+					"name": "Renovar Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/refresh",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"refresh"
+							]
+						},
+						"description": "Renovar token de acesso usando refresh token"
+					},
+					"response": []
+				},
+				{
+					"name": "Obter Perfil",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/auth/profile",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"profile"
+							]
+						},
+						"description": "Obter perfil do usuário autenticado"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints de autenticação e autorização"
+		},
+		{
+			"name": "📊 Pesquisas",
+			"item": [
+				{
+					"name": "Criar Pesquisa (Público)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"João Silva\",\n  \"whatsapp\": \"(11) 99999-9999\",\n  \"provedor_atual\": \"Vivo\",\n  \"satisfacao\": \"Satisfeito\",\n  \"bairro\": \"Centro\",\n  \"velocidade\": \"100 Mbps\",\n  \"valor_mensal\": \"R$ 89,90\",\n  \"uso_internet\": \"Trabalho, Netflix, jogos online\",\n  \"interesse_proposta\": \"Sim, tenho interesse\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/pesquisas",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"pesquisas"
+							]
+						},
+						"description": "Criar nova pesquisa (endpoint público)"
+					},
+					"response": []
+				},
+				{
+					"name": "Listar Pesquisas",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/pesquisas?page=1&limit=10&search=joão",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"pesquisas"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Número da página"
+								},
+								{
+									"key": "limit",
+									"value": "10",
+									"description": "Itens por página"
+								},
+								{
+									"key": "search",
+									"value": "joão",
+									"description": "Buscar por nome, bairro ou provedor"
+								},
+								{
+									"key": "bairro",
+									"value": "Centro",
+									"description": "Filtrar por bairro"
+								},
+								{
+									"key": "satisfacao",
+									"value": "Satisfeito",
+									"description": "Filtrar por satisfação"
+								},
+								{
+									"key": "interesse",
+									"value": "Sim, tenho interesse",
+									"description": "Filtrar por interesse"
+								}
+							]
+						},
+						"description": "Listar pesquisas com filtros e paginação"
+					},
+					"response": []
+				},
+				{
+					"name": "Buscar Pesquisa por ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/pesquisas/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"pesquisas",
+								"1"
+							]
+						},
+						"description": "Buscar pesquisa específica por ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Buscar Pesquisas por Bairro",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/pesquisas/bairro/Centro",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"pesquisas",
+								"bairro",
+								"Centro"
+							]
+						},
+						"description": "Buscar pesquisas por bairro específico"
+					},
+					"response": []
+				},
+				{
+					"name": "Obter Estatísticas",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/pesquisas/estatisticas",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"pesquisas",
+								"estatisticas"
+							]
+						},
+						"description": "Obter estatísticas completas das pesquisas"
+					},
+					"response": []
+				},
+				{
+					"name": "Atualizar Pesquisa",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"João Silva Atualizado\",\n  \"satisfacao\": \"Muito satisfeito\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/pesquisas/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"pesquisas",
+								"1"
+							]
+						},
+						"description": "Atualizar dados de uma pesquisa"
+					},
+					"response": []
+				},
+				{
+					"name": "Deletar Pesquisa",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/pesquisas/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"pesquisas",
+								"1"
+							]
+						},
+						"description": "Deletar uma pesquisa"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints para gerenciar pesquisas de mercado"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "auth_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

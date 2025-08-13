@@ -1,55 +1,55 @@
+# =========================
 # Estágio de build
+# =========================
 FROM node:18-alpine AS builder
 
-# Definir diretório de trabalho
+# Diretório de trabalho
 WORKDIR /app
 
-# Copiar arquivos de dependências
+# Copia apenas manifestos para otimizar cache
 COPY package*.json ./
 
-# Instalar dependências
-RUN npm ci --only=production
+# Instala TODAS as dependências (inclui dev) para compilar TypeScript
+RUN npm ci
 
-# Copiar código fonte
+# Copia o restante do código
 COPY . .
 
-# Compilar TypeScript
+# Compila TypeScript -> gera /app/dist
 RUN npm run build
 
+
+
+# =========================
 # Estágio de produção
+# =========================
 FROM node:18-alpine AS production
 
-# Criar usuário não-root para segurança
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nodejs -u 1001
+ENV NODE_ENV=production
 
-# Definir diretório de trabalho
+# Usuário não-root
+RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
+
 WORKDIR /app
 
-# Copiar arquivos de dependências
+# Instala apenas dependências de produção
 COPY package*.json ./
+# Use --omit=dev para evitar o aviso do npm
+RUN npm ci --omit=dev && npm cache clean --force
 
-# Instalar apenas dependências de produção
-RUN npm ci --only=production && npm cache clean --force
-
-# Copiar código compilado do estágio de build
+# Copia somente o build e configs necessários
 COPY --from=builder /app/dist ./dist
-
-# Copiar arquivos de configuração
 COPY config.env ./
 
-# Alterar propriedade dos arquivos para o usuário nodejs
-RUN chown -R nodejs:nodejs /app
-
-# Mudar para usuário não-root
+# Troca para usuário não-root
 USER nodejs
 
-# Expor porta
+# Porta exposta
 EXPOSE 3001
 
-# Health check
+# Healthcheck simples
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3001/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
 
-# Comando para iniciar a aplicação
+# Comando de start
 CMD ["node", "dist/server.js"]
