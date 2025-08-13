@@ -1,0 +1,708 @@
+{
+  "info": {
+    "name": "Pesquisa de Mercado - Filtros",
+    "description": "Coleção para testar todos os filtros da API de Pesquisa de Mercado",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "pesquisa-mercado-filtros-2024"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{auth_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3001",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Autenticação",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@exemplo.com\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data.token) {",
+                  "        pm.collectionVariables.set('auth_token', response.data.token);",
+                  "        console.log('Token salvo:', response.data.token);",
+                  "    }",
+                  "    if (response.success && response.data.refreshToken) {",
+                  "        pm.collectionVariables.set('refresh_token', response.data.refreshToken);",
+                  "        console.log('Refresh token salvo:', response.data.refreshToken);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registrar Usuário",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Novo Usuário\",\n  \"email\": \"novo@exemplo.com\",\n  \"password\": \"senha123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "refresh"]
+            }
+          }
+        },
+        {
+          "name": "Validar Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/validate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "validate"]
+            }
+          }
+        },
+        {
+          "name": "Obter Perfil",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "profile"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏥 Health Check",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/health",
+              "host": ["{{base_url}}"],
+              "path": ["api", "health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Pesquisas - Filtros Gerais",
+      "item": [
+        {
+          "name": "Buscar Todas as Pesquisas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pesquisas?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pesquisas"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar com Filtro de Texto",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pesquisas?search=João&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pesquisas"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "João"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar por Nome (Query)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pesquisas?nome=Maria&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pesquisas"],
+              "query": [
+                {
+                  "key": "nome",
+                  "value": "Maria"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar por Bairro (Query)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pesquisas?bairro=Centro&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pesquisas"],
+              "query": [
+                {
+                  "key": "bairro",
+                  "value": "Centro"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar por Provedor (Query)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pesquisas?provedor_atual=Vivo&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pesquisas"],
+              "query": [
+                {
+                  "key": "provedor_atual",
+                  "value": "Vivo"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎯 Filtros por Interesse",
+      "item": [
+        {
+          "name": "Apenas Interessados",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pesquisas/interessados?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pesquisas", "interessados"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Apenas Não Interessados",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pesquisas/nao-interessados?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pesquisas", "nao-interessados"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filtro por Interesse (Geral)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pesquisas?filtro_interesse=interessados&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pesquisas"],
+              "query": [
+                {
+                  "key": "filtro_interesse",
+                  "value": "interessados"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "😊 Filtros por Satisfação",
+      "item": [
+        {
+          "name": "Apenas Satisfeitos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pesquisas/satisfeitos?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pesquisas", "satisfeitos"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Apenas Insatisfeitos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pesquisas/insatisfeitos?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pesquisas", "insatisfeitos"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filtro por Satisfação (Geral)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pesquisas?filtro_satisfacao=satisfeitos&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pesquisas"],
+              "query": [
+                {
+                  "key": "filtro_satisfacao",
+                  "value": "satisfeitos"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔍 Busca por Campos Específicos",
+      "item": [
+        {
+          "name": "Buscar por Nome (Endpoint Específico)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pesquisas/nome/João?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pesquisas", "nome", "João"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar por Provedor (Endpoint Específico)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pesquisas/provedor/Vivo?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pesquisas", "provedor", "Vivo"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Buscar por Bairro (Endpoint Específico)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pesquisas/bairro/Centro?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pesquisas", "bairro", "Centro"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎛️ Filtros Combinados",
+      "item": [
+        {
+          "name": "Satisfeitos + Interessados",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pesquisas?filtro_satisfacao=satisfeitos&filtro_interesse=interessados&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pesquisas"],
+              "query": [
+                {
+                  "key": "filtro_satisfacao",
+                  "value": "satisfeitos"
+                },
+                {
+                  "key": "filtro_interesse",
+                  "value": "interessados"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Insatisfeitos + Não Interessados",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pesquisas?filtro_satisfacao=insatisfeitos&filtro_interesse=nao_interessados&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pesquisas"],
+              "query": [
+                {
+                  "key": "filtro_satisfacao",
+                  "value": "insatisfeitos"
+                },
+                {
+                  "key": "filtro_interesse",
+                  "value": "nao_interessados"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Busca + Filtro de Satisfação",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pesquisas?search=Vivo&filtro_satisfacao=satisfeitos&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pesquisas"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "Vivo"
+                },
+                {
+                  "key": "filtro_satisfacao",
+                  "value": "satisfeitos"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📈 Estatísticas",
+      "item": [
+        {
+          "name": "Buscar Estatísticas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pesquisas/estatisticas",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pesquisas", "estatisticas"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📝 CRUD Pesquisas",
+      "item": [
+        {
+          "name": "Criar Nova Pesquisa",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Teste Filtros\",\n  \"whatsapp\": \"11999999999\",\n  \"provedor_atual\": \"Vivo\",\n  \"satisfacao\": \"Muito satisfeito\",\n  \"bairro\": \"Centro\",\n  \"velocidade\": \"100 Mbps\",\n  \"valor_mensal\": \"R$ 89,90\",\n  \"uso_internet\": \"Trabalho, streaming, jogos\",\n  \"interesse_proposta\": \"Sim, tenho interesse\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pesquisas",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pesquisas"]
+            }
+          }
+        },
+        {
+          "name": "Buscar Pesquisa por ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pesquisas/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pesquisas", "1"]
+            }
+          }
+        },
+        {
+          "name": "Atualizar Pesquisa",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Nome Atualizado\",\n  \"whatsapp\": \"11999999999\",\n  \"provedor_atual\": \"Claro\",\n  \"satisfacao\": \"Satisfeito\",\n  \"bairro\": \"Centro\",\n  \"velocidade\": \"200 Mbps\",\n  \"valor_mensal\": \"R$ 99,90\",\n  \"uso_internet\": \"Trabalho, streaming, jogos, videoconferências\",\n  \"interesse_proposta\": \"Não tenho interesse\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pesquisas/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pesquisas", "1"]
+            }
+          }
+        },
+        {
+          "name": "Deletar Pesquisa",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pesquisas/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pesquisas", "1"]
+            }
+          }
+        },
+        {
+          "name": "Verificar WhatsApp",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pesquisas/verificar-whatsapp/11999999999",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pesquisas", "verificar-whatsapp", "11999999999"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

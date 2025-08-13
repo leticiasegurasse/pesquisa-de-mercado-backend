@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, getProfile, refreshToken } from '../controllers/authController';
+import { register, login, getProfile, refreshToken, validateToken } from '../controllers/authController';
 import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
@@ -9,7 +9,8 @@ router.post('/register', register);
 router.post('/login', login);
 router.post('/refresh', refreshToken);
 
-// Rota protegida para obter perfil do usuário
+// Rotas protegidas
 router.get('/profile', authenticateToken, getProfile);
+router.get('/validate', authenticateToken, validateToken);
 
 export default router;

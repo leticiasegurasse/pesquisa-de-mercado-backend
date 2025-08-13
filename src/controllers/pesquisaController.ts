@@ -113,16 +113,28 @@ export const criarPesquisa = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-// Buscar todas as pesquisas
+// Buscar todas as pesquisas com filtros avançados
 export const buscarPesquisas = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { page = 1, limit = 10, search, bairro, satisfacao, interesse } = req.query;
+    const { 
+      page = 1, 
+      limit = 10, 
+      search, 
+      bairro, 
+      satisfacao, 
+      interesse,
+      nome,
+      provedor_atual,
+      filtro_satisfacao,
+      filtro_interesse
+    } = req.query;
     
     const offset = (Number(page) - 1) * Number(limit);
     
     // Construir filtros
     const where: any = {};
     
+    // Busca geral por texto (nome, bairro, provedor)
     if (search) {
       where[Op.or] = [
         { nome: { [Op.iLike]: `%${search}%` } },
@@ -131,16 +143,45 @@ export const buscarPesquisas = async (req: Request, res: Response): Promise<void
       ];
     }
     
+    // Filtros específicos
+    if (nome) {
+      where.nome = { [Op.iLike]: `%${nome}%` };
+    }
+    
     if (bairro) {
       where.bairro = { [Op.iLike]: `%${bairro}%` };
     }
     
+    if (provedor_atual) {
+      where.provedor_atual = { [Op.iLike]: `%${provedor_atual}%` };
+    }
+    
+    // Filtro por satisfação específica
     if (satisfacao) {
       where.satisfacao = satisfacao;
     }
     
+    // Filtro por satisfação agrupada (satisfeitos/insatisfeitos)
+    if (filtro_satisfacao) {
+      if (filtro_satisfacao === 'satisfeitos') {
+        where.satisfacao = { [Op.in]: ['Muito satisfeito', 'Satisfeito'] };
+      } else if (filtro_satisfacao === 'insatisfeitos') {
+        where.satisfacao = { [Op.in]: ['Insatisfeito', 'Muito insatisfeito'] };
+      }
+    }
+    
+    // Filtro por interesse específico
     if (interesse) {
       where.interesse_proposta = interesse;
+    }
+    
+    // Filtro por interesse agrupado (interessados/não interessados)
+    if (filtro_interesse) {
+      if (filtro_interesse === 'interessados') {
+        where.interesse_proposta = 'Sim, tenho interesse';
+      } else if (filtro_interesse === 'nao_interessados') {
+        where.interesse_proposta = 'Não tenho interesse';
+      }
     }
 
     const { count, rows: pesquisas } = await Pesquisa.findAndCountAll({
@@ -162,6 +203,212 @@ export const buscarPesquisas = async (req: Request, res: Response): Promise<void
     });
   } catch (error) {
     console.error('Erro ao buscar pesquisas:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+};
+
+// Buscar pesquisas por interessados
+export const buscarInteressados = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const offset = (Number(page) - 1) * Number(limit);
+    
+    const { count, rows: pesquisas } = await Pesquisa.findAndCountAll({
+      where: {
+        interesse_proposta: 'Sim, tenho interesse'
+      },
+      order: [['createdAt', 'DESC']],
+      limit: Number(limit),
+      offset
+    });
+
+    res.status(200).json({
+      success: true,
+      data: pesquisas,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total: count,
+        totalPages: Math.ceil(count / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao buscar interessados:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+};
+
+// Buscar pesquisas por não interessados
+export const buscarNaoInteressados = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const offset = (Number(page) - 1) * Number(limit);
+    
+    const { count, rows: pesquisas } = await Pesquisa.findAndCountAll({
+      where: {
+        interesse_proposta: 'Não tenho interesse'
+      },
+      order: [['createdAt', 'DESC']],
+      limit: Number(limit),
+      offset
+    });
+
+    res.status(200).json({
+      success: true,
+      data: pesquisas,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total: count,
+        totalPages: Math.ceil(count / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao buscar não interessados:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+};
+
+// Buscar pesquisas por satisfeitos
+export const buscarSatisfeitos = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const offset = (Number(page) - 1) * Number(limit);
+    
+    const { count, rows: pesquisas } = await Pesquisa.findAndCountAll({
+      where: {
+        satisfacao: { [Op.in]: ['Muito satisfeito', 'Satisfeito'] }
+      },
+      order: [['createdAt', 'DESC']],
+      limit: Number(limit),
+      offset
+    });
+
+    res.status(200).json({
+      success: true,
+      data: pesquisas,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total: count,
+        totalPages: Math.ceil(count / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao buscar satisfeitos:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+};
+
+// Buscar pesquisas por insatisfeitos
+export const buscarInsatisfeitos = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const offset = (Number(page) - 1) * Number(limit);
+    
+    const { count, rows: pesquisas } = await Pesquisa.findAndCountAll({
+      where: {
+        satisfacao: { [Op.in]: ['Insatisfeito', 'Muito insatisfeito'] }
+      },
+      order: [['createdAt', 'DESC']],
+      limit: Number(limit),
+      offset
+    });
+
+    res.status(200).json({
+      success: true,
+      data: pesquisas,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total: count,
+        totalPages: Math.ceil(count / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao buscar insatisfeitos:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+};
+
+// Buscar pesquisas por nome
+export const buscarPorNome = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { nome } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+    const offset = (Number(page) - 1) * Number(limit);
+    
+    const { count, rows: pesquisas } = await Pesquisa.findAndCountAll({
+      where: {
+        nome: { [Op.iLike]: `%${nome}%` }
+      },
+      order: [['createdAt', 'DESC']],
+      limit: Number(limit),
+      offset
+    });
+
+    res.status(200).json({
+      success: true,
+      data: pesquisas,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total: count,
+        totalPages: Math.ceil(count / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao buscar por nome:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+};
+
+// Buscar pesquisas por provedor
+export const buscarPorProvedor = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { provedor } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+    const offset = (Number(page) - 1) * Number(limit);
+    
+    const { count, rows: pesquisas } = await Pesquisa.findAndCountAll({
+      where: {
+        provedor_atual: { [Op.iLike]: `%${provedor}%` }
+      },
+      order: [['createdAt', 'DESC']],
+      limit: Number(limit),
+      offset
+    });
+
+    res.status(200).json({
+      success: true,
+      data: pesquisas,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total: count,
+        totalPages: Math.ceil(count / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao buscar por provedor:', error);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'

@@ -257,3 +257,53 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
     });
   }
 };
+
+// Validar token
+export const validateToken = async (req: Request, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        message: 'Token inválido ou expirado'
+      });
+      return;
+    }
+
+    // Buscar usuário no banco para verificar se ainda existe e está ativo
+    const user = await User.findByPk(req.user.userId, {
+      attributes: { exclude: ['password'] }
+    });
+
+    if (!user || !user.isActive) {
+      res.status(401).json({
+        success: false,
+        message: 'Usuário não encontrado ou inativo'
+      });
+      return;
+    }
+
+    // Retornar dados do usuário
+    const userResponse = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+      createdAt: user.createdAt
+    };
+
+    res.status(200).json({
+      success: true,
+      message: 'Token válido',
+      data: {
+        user: userResponse
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao validar token:', error);
+    res.status(401).json({
+      success: false,
+      message: 'Token inválido'
+    });
+  }
+};

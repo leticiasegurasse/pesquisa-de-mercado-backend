@@ -164,6 +164,31 @@
 						"description": "Obter perfil do usuário autenticado"
 					},
 					"response": []
+				},
+				{
+					"name": "Validar Token",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/auth/validate",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"validate"
+							]
+						},
+						"description": "Validar se o token JWT é válido e retornar dados do usuário"
+					},
+					"response": []
 				}
 			],
 			"description": "Endpoints de autenticação e autorização"
