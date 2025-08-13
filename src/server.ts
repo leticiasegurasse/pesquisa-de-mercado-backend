@@ -6,6 +6,7 @@ import { testConnection, syncDatabase } from './config/database';
 import { initializeModels } from './config/models';
 import authRoutes from './routes/auth';
 import pesquisaRoutes from './routes/pesquisas';
+import whatsappRoutes from './routes/whatsapp';
 
 // Carregar variáveis de ambiente
 dotenv.config();
@@ -35,6 +36,7 @@ app.use((req, res, next) => {
 // Rotas
 app.use('/api/auth', authRoutes);
 app.use('/api/pesquisas', pesquisaRoutes);
+app.use('/api/whatsapp', whatsappRoutes);
 
 // Rota de teste
 app.get('/api/health', (req, res) => {

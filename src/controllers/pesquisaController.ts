@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { Op } from 'sequelize';
 import sequelize from '../config/database';
 import Pesquisa from '../models/Pesquisa';
+import whatsappService from '../services/whatsappService';
 
 // Criar nova pesquisa
 export const criarPesquisa = async (req: Request, res: Response): Promise<void> => {
@@ -39,6 +40,24 @@ export const criarPesquisa = async (req: Request, res: Response): Promise<void> 
       uso_internet,
       interesse_proposta
     });
+
+    // Enviar notificação WhatsApp (em background, não bloqueia a resposta)
+    try {
+      await whatsappService.sendPesquisaNotification({
+        nome,
+        whatsapp,
+        provedor_atual,
+        satisfacao,
+        bairro,
+        velocidade,
+        valor_mensal,
+        uso_internet,
+        interesse_proposta
+      });
+    } catch (whatsappError) {
+      console.error('❌ Erro ao enviar notificação WhatsApp:', whatsappError);
+      // Não falha a criação da pesquisa se o WhatsApp falhar
+    }
 
     res.status(201).json({
       success: true,
