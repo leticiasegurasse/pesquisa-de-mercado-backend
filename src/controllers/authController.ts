@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 import User from '../models/User';
 import { generateToken } from '../utils/jwt';
 
@@ -48,6 +49,13 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       role: user.role
     });
 
+    // Gerar refresh token
+    const refreshToken = generateToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role
+    }, '7d'); // Refresh token válido por 7 dias
+
     // Retornar dados do usuário (sem senha) e token
     const userResponse = {
       id: user.id,
@@ -63,7 +71,8 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       message: 'Usuário criado com sucesso',
       data: {
         user: userResponse,
-        token
+        token,
+        refreshToken
       }
     });
   } catch (error) {
@@ -124,6 +133,13 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       role: user.role
     });
 
+    // Gerar refresh token
+    const refreshToken = generateToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role
+    }, '7d'); // Refresh token válido por 7 dias
+
     // Retornar dados do usuário (sem senha) e token
     const userResponse = {
       id: user.id,
@@ -139,7 +155,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       message: 'Login realizado com sucesso',
       data: {
         user: userResponse,
-        token
+        token,
+        refreshToken
       }
     });
   } catch (error) {
@@ -182,6 +199,61 @@ export const getProfile = async (req: Request, res: Response): Promise<void> => 
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'
+    });
+  }
+};
+
+export const refreshToken = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      res.status(400).json({
+        success: false,
+        message: 'Refresh token é obrigatório'
+      });
+      return;
+    }
+
+    // Verificar refresh token
+    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET!) as any;
+    
+    const user = await User.findByPk(decoded.userId);
+    if (!user || !user.isActive) {
+      res.status(401).json({
+        success: false,
+        message: 'Usuário não encontrado ou inativo'
+      });
+      return;
+    }
+
+    // Gerar novo token
+    const newToken = generateToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role
+    });
+
+    // Gerar novo refresh token
+    const newRefreshToken = generateToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role
+    }, '7d');
+
+    res.status(200).json({
+      success: true,
+      message: 'Token renovado com sucesso',
+      data: {
+        token: newToken,
+        refreshToken: newRefreshToken
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao renovar token:', error);
+    res.status(401).json({
+      success: false,
+      message: 'Refresh token inválido'
     });
   }
 };

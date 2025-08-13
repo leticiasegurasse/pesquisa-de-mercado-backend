@@ -3,13 +3,15 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { testConnection, syncDatabase } from './config/database';
+import { initializeModels } from './config/models';
 import authRoutes from './routes/auth';
+import pesquisaRoutes from './routes/pesquisas';
 
 // Carregar variáveis de ambiente
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001; // Mudando para 3001 para corresponder ao frontend
 
 // Middlewares de segurança
 app.use(helmet());
@@ -32,6 +34,7 @@ app.use((req, res, next) => {
 
 // Rotas
 app.use('/api/auth', authRoutes);
+app.use('/api/pesquisas', pesquisaRoutes);
 
 // Rota de teste
 app.get('/api/health', (req, res) => {
@@ -58,6 +61,9 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 // Função para inicializar o servidor
 const startServer = async (): Promise<void> => {
   try {
+    // Inicializar modelos
+    initializeModels();
+    
     // Testar conexão com o banco de dados
     await testConnection();
     
