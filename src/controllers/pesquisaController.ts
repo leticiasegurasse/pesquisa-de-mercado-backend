@@ -22,23 +22,46 @@ const verificarWhatsAppExistente = async (whatsapp: string): Promise<boolean> =>
   return !!pesquisaExistente;
 };
 
+// Função auxiliar para verificar se CPF já existe
+const verificarCPFExistente = async (cpf: string): Promise<boolean> => {
+  if (!cpf) return false; // CPF é opcional
+  
+  const cpfNormalizado = cpf.replace(/\D/g, '');
+  
+  const pesquisaExistente = await Pesquisa.findOne({
+    where: {
+      cpf: {
+        [Op.or]: [
+          cpf,
+          cpfNormalizado,
+          { [Op.iLike]: `%${cpfNormalizado}%` }
+        ]
+      }
+    }
+  });
+  
+  return !!pesquisaExistente;
+};
+
 // Criar nova pesquisa
 export const criarPesquisa = async (req: Request, res: Response): Promise<void> => {
   try {
     const {
       nome,
       whatsapp,
+      cpf,
       provedor_atual,
       satisfacao,
       bairro,
       velocidade,
       valor_mensal,
       uso_internet,
-      interesse_proposta
+      interesse_proposta,
+      responsavel
     } = req.body;
 
     // Validações básicas
-    if (!nome || !whatsapp || !provedor_atual || !satisfacao || !bairro || !valor_mensal || !uso_internet || !interesse_proposta) {
+    if (!nome || !whatsapp || !provedor_atual || !satisfacao || !bairro || !valor_mensal || !uso_internet || !interesse_proposta || !responsavel) {
       res.status(400).json({
         success: false,
         message: 'Todos os campos obrigatórios devem ser preenchidos'
@@ -58,33 +81,51 @@ export const criarPesquisa = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
+    // Verificar se o CPF já foi cadastrado (se fornecido)
+    if (cpf) {
+      const cpfJaExiste = await verificarCPFExistente(cpf);
+      
+      if (cpfJaExiste) {
+        res.status(409).json({
+          success: false,
+          message: 'Este CPF já foi cadastrado em uma pesquisa anterior. Cada CPF pode participar apenas uma vez.',
+          error: 'CPF_DUPLICATE'
+        });
+        return;
+      }
+    }
+
     // Criar pesquisa
     const pesquisa = await Pesquisa.create({
       nome,
       whatsapp,
+      cpf: cpf || null,
       provedor_atual,
       satisfacao,
       bairro,
       velocidade: velocidade || '',
       valor_mensal,
       uso_internet,
-      interesse_proposta
+      interesse_proposta,
+      responsavel
     });
 
-    // Enviar notificação WhatsApp (em background, não bloqueia a resposta)
-    try {
-      await whatsappService.sendPesquisaNotification({
-        nome,
-        whatsapp,
-        provedor_atual,
-        satisfacao,
-        bairro,
-        velocidade,
-        valor_mensal,
-        uso_internet,
-        interesse_proposta
-      });
-    } catch (whatsappError) {
+          // Enviar notificação WhatsApp (em background, não bloqueia a resposta)
+      try {
+        await whatsappService.sendPesquisaNotification({
+          nome,
+          whatsapp,
+          cpf,
+          provedor_atual,
+          satisfacao,
+          bairro,
+          velocidade,
+          valor_mensal,
+          uso_internet,
+          interesse_proposta,
+          responsavel
+        });
+      } catch (whatsappError) {
       console.error('❌ Erro ao enviar notificação WhatsApp:', whatsappError);
       // Não falha a criação da pesquisa se o WhatsApp falhar
     }
@@ -193,7 +234,7 @@ export const buscarPesquisas = async (req: Request, res: Response): Promise<void
 
     res.status(200).json({
       success: true,
-      data: pesquisas,
+      data: pesquisas.map(pesquisa => pesquisa.toJSON()),
       pagination: {
         page: Number(page),
         limit: Number(limit),
@@ -227,7 +268,7 @@ export const buscarInteressados = async (req: Request, res: Response): Promise<v
 
     res.status(200).json({
       success: true,
-      data: pesquisas,
+      data: pesquisas.map(pesquisa => pesquisa.toJSON()),
       pagination: {
         page: Number(page),
         limit: Number(limit),
@@ -261,7 +302,7 @@ export const buscarNaoInteressados = async (req: Request, res: Response): Promis
 
     res.status(200).json({
       success: true,
-      data: pesquisas,
+      data: pesquisas.map(pesquisa => pesquisa.toJSON()),
       pagination: {
         page: Number(page),
         limit: Number(limit),
@@ -295,7 +336,7 @@ export const buscarSatisfeitos = async (req: Request, res: Response): Promise<vo
 
     res.status(200).json({
       success: true,
-      data: pesquisas,
+      data: pesquisas.map(pesquisa => pesquisa.toJSON()),
       pagination: {
         page: Number(page),
         limit: Number(limit),
@@ -329,7 +370,7 @@ export const buscarInsatisfeitos = async (req: Request, res: Response): Promise<
 
     res.status(200).json({
       success: true,
-      data: pesquisas,
+      data: pesquisas.map(pesquisa => pesquisa.toJSON()),
       pagination: {
         page: Number(page),
         limit: Number(limit),
@@ -364,7 +405,7 @@ export const buscarPorNome = async (req: Request, res: Response): Promise<void> 
 
     res.status(200).json({
       success: true,
-      data: pesquisas,
+      data: pesquisas.map(pesquisa => pesquisa.toJSON()),
       pagination: {
         page: Number(page),
         limit: Number(limit),
@@ -399,7 +440,7 @@ export const buscarPorProvedor = async (req: Request, res: Response): Promise<vo
 
     res.status(200).json({
       success: true,
-      data: pesquisas,
+      data: pesquisas.map(pesquisa => pesquisa.toJSON()),
       pagination: {
         page: Number(page),
         limit: Number(limit),
@@ -433,7 +474,7 @@ export const buscarPesquisaPorId = async (req: Request, res: Response): Promise<
 
     res.status(200).json({
       success: true,
-      data: pesquisa
+      data: pesquisa.toJSON()
     });
   } catch (error) {
     console.error('Erro ao buscar pesquisa:', error);
@@ -458,7 +499,7 @@ export const buscarPesquisasPorBairro = async (req: Request, res: Response): Pro
 
     res.status(200).json({
       success: true,
-      data: pesquisas
+      data: pesquisas.map(pesquisa => pesquisa.toJSON())
     });
   } catch (error) {
     console.error('Erro ao buscar pesquisas por bairro:', error);
@@ -641,6 +682,40 @@ export const atualizarPesquisa = async (req: Request, res: Response): Promise<vo
       return;
     }
 
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+};
+
+// Verificar se CPF já existe
+export const verificarCPF = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { cpf } = req.params;
+    
+    if (!cpf) {
+      res.status(400).json({
+        success: false,
+        message: 'CPF é obrigatório'
+      });
+      return;
+    }
+
+    const cpfJaExiste = await verificarCPFExistente(cpf);
+    
+    res.status(200).json({
+      success: true,
+      data: {
+        cpf,
+        jaExiste: cpfJaExiste,
+        message: cpfJaExiste 
+          ? 'Este CPF já foi cadastrado em uma pesquisa anterior.' 
+          : 'CPF disponível para cadastro.'
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao verificar CPF:', error);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'

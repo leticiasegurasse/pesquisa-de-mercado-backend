@@ -8,6 +8,7 @@ import {
   atualizarPesquisa,
   deletarPesquisa,
   verificarWhatsApp,
+  verificarCPF,
   buscarInteressados,
   buscarNaoInteressados,
   buscarSatisfeitos,
@@ -22,6 +23,7 @@ const router = Router();
 // Rotas públicas
 router.post('/', criarPesquisa); // Criar pesquisa (público)
 router.get('/verificar-whatsapp/:whatsapp', verificarWhatsApp); // Verificar WhatsApp (público)
+router.get('/verificar-cpf/:cpf', verificarCPF); // Verificar CPF (público)
 
 // Rotas protegidas (requerem autenticação)
 router.get('/', authenticateToken, buscarPesquisas); // Listar pesquisas com filtros

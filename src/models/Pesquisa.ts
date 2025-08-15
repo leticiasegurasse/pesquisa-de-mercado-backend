@@ -5,6 +5,7 @@ interface PesquisaAttributes {
   id?: number;
   nome: string;
   whatsapp: string;
+  cpf?: string;
   provedor_atual: string;
   satisfacao: string;
   bairro: string;
@@ -12,6 +13,7 @@ interface PesquisaAttributes {
   valor_mensal: string;
   uso_internet: string;
   interesse_proposta: string;
+  responsavel: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -22,6 +24,7 @@ class Pesquisa extends Model<PesquisaAttributes, PesquisaCreationAttributes> imp
   public id!: number;
   public nome!: string;
   public whatsapp!: string;
+  public cpf!: string;
   public provedor_atual!: string;
   public satisfacao!: string;
   public bairro!: string;
@@ -29,6 +32,7 @@ class Pesquisa extends Model<PesquisaAttributes, PesquisaCreationAttributes> imp
   public valor_mensal!: string;
   public uso_internet!: string;
   public interesse_proposta!: string;
+  public responsavel!: string;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -53,6 +57,14 @@ Pesquisa.init(
       allowNull: false,
       validate: {
         notEmpty: true
+      }
+    },
+    cpf: {
+      type: DataTypes.STRING(14),
+      allowNull: true,
+      unique: true,
+      validate: {
+        len: [11, 14] // CPF com ou sem máscara
       }
     },
     provedor_atual: {
@@ -94,6 +106,14 @@ Pesquisa.init(
     interesse_proposta: {
       type: DataTypes.ENUM('Sim, tenho interesse', 'Não tenho interesse'),
       allowNull: false
+    },
+    responsavel: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
+      validate: {
+        notEmpty: true,
+        len: [2, 100]
+      }
     }
   },
   {

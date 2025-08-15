@@ -83,7 +83,8 @@ export const testPesquisaNotification = async (req: Request, res: Response): Pro
       velocidade: '100 Mbps',
       valor_mensal: 'R$ 89,90',
       uso_internet: 'Trabalho, Netflix, jogos online',
-      interesse_proposta: 'Sim, tenho interesse'
+      interesse_proposta: 'Sim, tenho interesse',
+      responsavel: 'Leticia'
     };
 
     const success = await whatsappService.sendPesquisaNotification(pesquisaTeste);

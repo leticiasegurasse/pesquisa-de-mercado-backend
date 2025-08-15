@@ -12,15 +12,49 @@ import whatsappRoutes from './routes/whatsapp';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3001; // Mudando para 3001 para corresponder ao frontend
+const PORT = process.env.PORT || 3001;
 
 // Middlewares de segurança
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-eval'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "https:"],
+      fontSrc: ["'self'", "https:"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"],
+    },
+  },
+}));
 
 // Configuração do CORS
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://pesquisa.sgr.dev.br',
+  'https://www.pesquisa.sgr.dev.br'
+];
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || ['http://localhost:5173', 'http://localhost:3000'],
-  credentials: true
+  origin: function (origin, callback) {
+    // Permitir requests sem origin (como mobile apps ou Postman)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('CORS bloqueado para origin:', origin);
+      callback(new Error('Não permitido pelo CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 // Middleware para parsing de JSON
@@ -29,7 +63,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Middleware de logging
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path} - Origin: ${req.headers.origin}`);
   next();
 });
 
@@ -44,7 +78,11 @@ app.get('/api/health', (req, res) => {
     success: true,
     message: 'Servidor funcionando corretamente',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    cors: {
+      allowedOrigins,
+      currentOrigin: req.headers.origin
+    }
   });
 });
 
@@ -58,7 +96,6 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
 });
-
 
 // Função para inicializar o servidor
 const startServer = async (): Promise<void> => {
@@ -78,6 +115,7 @@ const startServer = async (): Promise<void> => {
       console.log(`📊 Ambiente: ${process.env.NODE_ENV || 'development'}`);
       console.log(`🔗 URL: http://localhost:${PORT}`);
       console.log(`📋 Health Check: http://localhost:${PORT}/api/health`);
+      console.log(`🌐 CORS Origins permitidos:`, allowedOrigins);
     });
   } catch (error) {
     console.error('❌ Erro ao inicializar servidor:', error);

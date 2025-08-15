@@ -14,6 +14,7 @@ interface WhatsAppMessage {
 interface PesquisaData {
   nome: string;
   whatsapp: string;
+  cpf?: string;
   provedor_atual: string;
   satisfacao: string;
   bairro: string;
@@ -21,6 +22,7 @@ interface PesquisaData {
   valor_mensal: string;
   uso_internet: string;
   interesse_proposta: string;
+  responsavel: string;
 }
 
 class WhatsAppService {
@@ -67,6 +69,7 @@ class WhatsAppService {
       novo: '🆕',
       pessoa: '👤',
       telefone: '📱',
+      documento: '📄',
       provedor: '🌐',
       satisfacao: '😊',
       localizacao: '📍',
@@ -74,6 +77,7 @@ class WhatsAppService {
       dinheiro: '💰',
       uso: '💻',
       interesse: '🎯',
+      responsavel: '👨‍💼',
       separador: '━━━━━━━━━━━━━━━━━━━━'
     };
 
@@ -81,6 +85,7 @@ class WhatsAppService {
 
 ${emoji.pessoa} *Nome:* ${pesquisa.nome}
 ${emoji.telefone} *WhatsApp:* ${pesquisa.whatsapp}
+${pesquisa.cpf ? `${emoji.documento} *CPF:* ${pesquisa.cpf}` : ''}
 ${emoji.provedor} *Provedor Atual:* ${pesquisa.provedor_atual}
 ${emoji.satisfacao} *Satisfação:* ${pesquisa.satisfacao}
 ${emoji.localizacao} *Bairro:* ${pesquisa.bairro}
@@ -88,6 +93,7 @@ ${emoji.velocidade} *Velocidade:* ${pesquisa.velocidade || 'Não informado'}
 ${emoji.dinheiro} *Valor Mensal:* ${pesquisa.valor_mensal}
 ${emoji.uso} *Uso da Internet:* ${pesquisa.uso_internet}
 ${emoji.interesse} *Interesse em Proposta:* ${pesquisa.interesse_proposta}
+${emoji.responsavel} *Responsável:* ${pesquisa.responsavel}
 
 ${emoji.separador}
 📊 *Dados coletados em:* ${new Date().toLocaleString('pt-BR')}
