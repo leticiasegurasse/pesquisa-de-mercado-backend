@@ -1,55 +1,51 @@
-# =========================
-# Estágio de build
-# =========================
-FROM node:18-alpine AS builder
+# Build stage
+FROM node:18-alpine as build
 
-# Diretório de trabalho
+# Set working directory
 WORKDIR /app
 
-# Copia apenas manifestos para otimizar cache
+# Copy package files
 COPY package*.json ./
 
-# Instala TODAS as dependências (inclui dev) para compilar TypeScript
+# Install dependencies
 RUN npm ci
 
-# Copia o restante do código
+# Copy source code
 COPY . .
 
-# Compila TypeScript -> gera /app/dist
+# Build the app
 RUN npm run build
 
+# Production stage
+FROM node:18-alpine as production
 
-
-# =========================
-# Estágio de produção
-# =========================
-FROM node:18-alpine AS production
-
+# Set environment
 ENV NODE_ENV=production
 
-# Usuário não-root
+# Create non-root user
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
 
+# Set working directory
 WORKDIR /app
 
-# Instala apenas dependências de produção
+# Copy package files
 COPY package*.json ./
-# Use --omit=dev para evitar o aviso do npm
+
+# Install production dependencies
 RUN npm ci --omit=dev && npm cache clean --force
 
-# Copia somente o build e configs necessários
-COPY --from=builder /app/dist ./dist
-COPY config.env ./
+# Copy built files
+COPY --from=build /app/dist ./dist
 
-# Troca para usuário não-root
+# Change to non-root user
 USER nodejs
 
-# Porta exposta
+# Expose port
 EXPOSE 3001
 
-# Healthcheck simples
+# Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3001/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
 
-# Comando de start
+# Start command
 CMD ["node", "dist/server.js"]

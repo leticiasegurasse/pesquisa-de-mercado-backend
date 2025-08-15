@@ -49,8 +49,7 @@ nodemon.json
 .eslintrc*
 .prettierrc*
 
-# Arquivos Docker
-Dockerfile*
+# Arquivos Docker (não ignorar Dockerfile)
 .dockerignore
 
 # Arquivos de backup
