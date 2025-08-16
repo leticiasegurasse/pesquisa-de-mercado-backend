@@ -33,19 +33,21 @@ app.use(helmet({
 }));
 
 // Configuração do CORS
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'https://pesquisa.sgr.dev.br',
-  'https://www.pesquisa.sgr.dev.br'
-];
+const corsOrigins = process.env.CORS_ORIGIN 
+  ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
+  : [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'https://pesquisa.sgr.dev.br',
+      'https://www.pesquisa.sgr.dev.br'
+    ];
 
 app.use(cors({
   origin: function (origin, callback) {
     // Permitir requests sem origin (como mobile apps ou Postman)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    if (corsOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
       console.log('CORS bloqueado para origin:', origin);
@@ -80,7 +82,7 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
     cors: {
-      allowedOrigins,
+      allowedOrigins: corsOrigins,
       currentOrigin: req.headers.origin
     }
   });
@@ -115,7 +117,7 @@ const startServer = async (): Promise<void> => {
       console.log(`📊 Ambiente: ${process.env.NODE_ENV || 'development'}`);
       console.log(`🔗 URL: http://localhost:${PORT}`);
       console.log(`📋 Health Check: http://localhost:${PORT}/api/health`);
-      console.log(`🌐 CORS Origins permitidos:`, allowedOrigins);
+      console.log(`🌐 CORS Origins permitidos:`, corsOrigins);
     });
   } catch (error) {
     console.error('❌ Erro ao inicializar servidor:', error);

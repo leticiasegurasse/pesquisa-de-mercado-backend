@@ -35,7 +35,11 @@ npm install
 
 3. **Configure as variáveis de ambiente**
    
-   Copie o arquivo `config.env` e renomeie para `.env`, então configure suas variáveis:
+   **Para Desenvolvimento:**
+   Copie o arquivo `config.env` e renomeie para `.env`, então configure suas variáveis.
+   
+   **Para Produção:**
+   Use o arquivo `production.env.example` como base para criar seu `.env` de produção.
 
 ```bash
 # Configurações do Servidor
@@ -49,12 +53,28 @@ DB_NAME=seu_nome_banco
 DB_USER=seu_usuario
 DB_PASSWORD=sua_senha
 
+# Configurações do Pool de Conexões (Opcional)
+DB_POOL_MAX=10
+DB_POOL_MIN=0
+DB_POOL_ACQUIRE=30000
+DB_POOL_IDLE=10000
+
+# Configurações de Timeout (Opcional)
+DB_STATEMENT_TIMEOUT=30000
+DB_QUERY_TIMEOUT=30000
+DB_CONNECT_TIMEOUT=30000
+DB_LOCK_TIMEOUT=10000
+
+# Logs do Banco (Opcional)
+DB_LOGGING=false
+
 # Configurações JWT
 JWT_SECRET=sua_chave_secreta_jwt_muito_segura
 JWT_EXPIRES_IN=24h
 
 # Configurações de CORS
-CORS_ORIGIN=http://localhost:3000
+# Separe múltiplas origens por vírgula
+CORS_ORIGIN=http://localhost:5173,http://localhost:3000,https://pesquisa.sgr.dev.br,https://www.pesquisa.sgr.dev.br
 ```
 
 ## 🗄️ Configuração do Banco de Dados
@@ -202,6 +222,80 @@ Authorization: Bearer <seu_token_jwt>
 - CORS configurado
 - Validação de entrada
 - Tratamento de erros centralizado
+
+## 🔧 Solução de Problemas
+
+### Erro "out of shared memory" no PostgreSQL
+
+Se você encontrar o erro `out of shared memory` em produção, isso indica que o PostgreSQL está esgotando a memória compartilhada para locks. O sistema agora inclui:
+
+1. **Sincronização inteligente**: O sistema verifica se as tabelas existem antes de tentar sincronizar
+2. **Criação manual de tabelas**: Se a sincronização falhar, o sistema cria as tabelas manualmente
+3. **Configurações de pool otimizadas**: Use as variáveis `DB_POOL_*` para ajustar o pool de conexões
+4. **Timeouts configuráveis**: Use as variáveis `DB_*_TIMEOUT` para ajustar timeouts
+5. **Fallback robusto**: Múltiplas estratégias de recuperação em caso de erro
+
+**Soluções adicionais no PostgreSQL:**
+
+```sql
+-- Aumentar max_locks_per_transaction
+ALTER SYSTEM SET max_locks_per_transaction = 256;
+
+-- Aumentar shared_buffers (se houver memória disponível)
+ALTER SYSTEM SET shared_buffers = '256MB';
+
+-- Reiniciar o PostgreSQL após as alterações
+SELECT pg_reload_conf();
+```
+
+### Configurações Recomendadas para Produção
+
+```bash
+# Configurações otimizadas para produção
+NODE_ENV=production
+DB_POOL_MAX=5
+DB_POOL_MIN=0
+DB_POOL_ACQUIRE=60000
+DB_POOL_IDLE=30000
+DB_STATEMENT_TIMEOUT=60000
+DB_QUERY_TIMEOUT=60000
+DB_CONNECT_TIMEOUT=60000
+DB_LOCK_TIMEOUT=30000
+DB_LOGGING=false
+```
+
+### Configuração do PostgreSQL em Produção
+
+1. **Execute o script de otimização:**
+   ```bash
+   # Conecte como superusuário
+   sudo -u postgres psql
+   
+   # Execute o script de configuração
+   \i fix-postgres-memory.sql
+   ```
+
+2. **Reinicie o PostgreSQL:**
+   ```bash
+   sudo systemctl restart postgresql
+   ```
+
+3. **Verifique as configurações:**
+   ```sql
+   SHOW max_locks_per_transaction;
+   SHOW shared_buffers;
+   SHOW work_mem;
+   ```
+
+### Solução Rápida para "Out of Shared Memory"
+
+Se você estiver enfrentando o erro imediatamente, execute estes comandos no PostgreSQL:
+
+```sql
+-- Como superusuário (postgres)
+ALTER SYSTEM SET max_locks_per_transaction = 256;
+SELECT pg_reload_conf();
+```
 
 ## 📁 Estrutura do Projeto
 
