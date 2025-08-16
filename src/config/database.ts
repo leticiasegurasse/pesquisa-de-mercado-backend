@@ -25,7 +25,7 @@ const sequelize = new Sequelize({
   // Configurações adicionais para produção
   dialectOptions: {
     // Configurações específicas do PostgreSQL
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
     // Configurações para evitar problemas de memória
     statement_timeout: parseInt(process.env.DB_STATEMENT_TIMEOUT || '30000'),
     query_timeout: parseInt(process.env.DB_QUERY_TIMEOUT || '30000'),

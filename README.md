@@ -39,7 +39,13 @@ npm install
    Copie o arquivo `config.env` e renomeie para `.env`, então configure suas variáveis.
    
    **Para Produção:**
-   Use o arquivo `production.env.example` como base para criar seu `.env` de produção.
+   ```bash
+   # Copie o arquivo de exemplo
+   cp production.env.example .env
+   
+   # Edite as configurações conforme seu ambiente
+   nano .env
+   ```
 
 ```bash
 # Configurações do Servidor
@@ -67,6 +73,9 @@ DB_LOCK_TIMEOUT=10000
 
 # Logs do Banco (Opcional)
 DB_LOGGING=false
+
+# SSL (Opcional - use 'true' apenas se seu PostgreSQL suportar SSL)
+DB_SSL=false
 
 # Configurações JWT
 JWT_SECRET=sua_chave_secreta_jwt_muito_segura
@@ -262,6 +271,7 @@ DB_QUERY_TIMEOUT=60000
 DB_CONNECT_TIMEOUT=60000
 DB_LOCK_TIMEOUT=30000
 DB_LOGGING=false
+DB_SSL=false
 ```
 
 ### Configuração do PostgreSQL em Produção
@@ -295,6 +305,22 @@ Se você estiver enfrentando o erro imediatamente, execute estes comandos no Pos
 -- Como superusuário (postgres)
 ALTER SYSTEM SET max_locks_per_transaction = 256;
 SELECT pg_reload_conf();
+```
+
+### Erro de SSL no PostgreSQL
+
+Se você encontrar o erro `The server does not support SSL connections`, configure:
+
+```bash
+# Desabilitar SSL
+DB_SSL=false
+```
+
+**Ou se seu PostgreSQL suportar SSL:**
+
+```bash
+# Habilitar SSL com certificado auto-assinado
+DB_SSL=true
 ```
 
 ## 📁 Estrutura do Projeto
