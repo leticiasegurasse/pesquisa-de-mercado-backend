@@ -5,8 +5,7 @@ FROM node:20-alpine AS builder
 ENV NODE_ENV=development
 WORKDIR /app
 
-# Instala dependências de build (caso use libs nativas como bcrypt)
-# Se você usa somente libs puras (ex. bcryptjs), pode remover essa linha
+# Instala dependências de build (necessário para bcryptjs)
 RUN apk add --no-cache python3 make g++
 
 # Copia manifestos antes para melhor cache
@@ -18,9 +17,6 @@ RUN npm ci
 # Copia o resto do projeto
 COPY tsconfig*.json ./
 COPY src ./src
-COPY .env.example ./
-# Se houver pastas adicionais (ex: config, prisma, etc.), copie aqui
-COPY config ./config
 
 # Compila para JS
 RUN npm run build

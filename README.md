@@ -85,6 +85,42 @@ npm run build
 npm start
 ```
 
+### Docker
+
+#### Build e execução simples
+```bash
+# Build da imagem
+docker build -t backend-auth .
+
+# Executar container
+docker run -p 3000:3000 \
+  -e DB_HOST=localhost \
+  -e DB_PASSWORD=sua_senha \
+  -e JWT_SECRET=seu_secret \
+  backend-auth
+```
+
+#### Usando Docker Compose (recomendado)
+```bash
+# Executar com PostgreSQL incluído
+docker-compose up -d
+
+# Ver logs
+docker-compose logs -f app
+
+# Parar serviços
+docker-compose down
+```
+
+#### Script de teste automatizado
+```bash
+# Dar permissão de execução
+chmod +x scripts/docker-build.sh
+
+# Executar teste
+./scripts/docker-build.sh
+```
+
 ## 📚 API Endpoints
 
 ### Autenticação
