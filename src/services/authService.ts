@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import User from '../models/User';
 
 interface LoginData {
@@ -26,7 +26,7 @@ class AuthService {
     const secret = process.env.JWT_SECRET || 'default_secret';
     const expiresIn = process.env.JWT_EXPIRES_IN || '24h';
     
-    return jwt.sign({ userId }, secret, { expiresIn });
+    return (jwt as any).sign({ userId }, secret, { expiresIn });
   }
 
   public async register(data: RegisterData): Promise<AuthResponse> {
@@ -96,7 +96,7 @@ class AuthService {
   public async validateToken(token: string): Promise<{ userId: number }> {
     try {
       const secret = process.env.JWT_SECRET || 'default_secret';
-      const decoded = jwt.verify(token, secret) as { userId: number };
+      const decoded = (jwt as any).verify(token, secret) as { userId: number };
       
       // Verificar se o usuário ainda existe e está ativo
       const user = await User.findByPk(decoded.userId);
