@@ -256,23 +256,25 @@ Verifica o status da aplicação.
 ## 📁 Estrutura do Projeto
 
 ```
-src/
-├── config/
-│   └── database.ts          # Configuração do Sequelize
-├── controllers/
-│   └── authController.ts    # Controllers de autenticação
-├── middleware/
-│   ├── auth.ts             # Middleware de autenticação JWT
-│   ├── validation.ts       # Middleware de validação
-│   └── errorHandler.ts     # Tratamento de erros
-├── models/
-│   └── User.ts             # Modelo de usuário
-├── routes/
-│   └── authRoutes.ts       # Rotas de autenticação
-├── services/
-│   └── authService.ts      # Lógica de negócio
-├── app.ts                  # Configuração do Express
-└── server.ts               # Servidor principal
+├── api/
+│   └── index.ts            # Ponto de entrada Vercel
+└── src/
+    ├── config/
+    │   └── database.ts          # Configuração do Sequelize
+    ├── controllers/
+    │   └── authController.ts    # Controllers de autenticação
+    ├── middleware/
+    │   ├── auth.ts             # Middleware de autenticação JWT
+    │   ├── validation.ts       # Middleware de validação
+    │   └── errorHandler.ts     # Tratamento de erros
+    ├── models/
+    │   └── User.ts             # Modelo de usuário
+    ├── routes/
+    │   └── authRoutes.ts       # Rotas de autenticação
+    ├── services/
+    │   └── authService.ts      # Lógica de negócio
+    ├── app.ts                  # Configuração do Express
+    └── server.ts               # Servidor principal
 ```
 
 ## 🧪 Testes
