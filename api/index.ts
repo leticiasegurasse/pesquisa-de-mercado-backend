@@ -2,8 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
-import { testConnection, syncDatabase } from './config/database';
-import authRoutes from './routes/auth';
+import authRoutes from '../src/routes/auth';
 
 // Carregar variáveis de ambiente
 dotenv.config();
@@ -74,47 +73,4 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
-
-// Função para inicializar o servidor
-const startServer = async (): Promise<void> => {
-  try {
-    // Só inicializar banco se não estiver na Vercel
-    if (!process.env.VERCEL) {
-      // Testar conexão com o banco de dados
-      await testConnection();
-      
-      // Sincronizar modelos com o banco de dados
-      await syncDatabase();
-    }
-    
-    // Iniciar servidor
-    app.listen(PORT, () => {
-      console.log(`🚀 Servidor rodando na porta ${PORT}`);
-      console.log(`📊 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🔗 URL: http://localhost:${PORT}`);
-      console.log(`📋 Health Check: http://localhost:${PORT}/api/health`);
-    });
-  } catch (error) {
-    console.error('❌ Erro ao inicializar servidor:', error);
-    process.exit(1);
-  }
-};
-
-// Tratamento de sinais para encerramento graceful
-process.on('SIGTERM', () => {
-  console.log('🛑 Recebido SIGTERM, encerrando servidor...');
-  process.exit(0);
-});
-
-process.on('SIGINT', () => {
-  console.log('🛑 Recebido SIGINT, encerrando servidor...');
-  process.exit(0);
-});
-
-// Iniciar servidor
-if (process.env.NODE_ENV !== 'production') {
-  startServer();
-}
-
-// Exportar app para Vercel
 export default app;
