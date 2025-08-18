@@ -82,6 +82,7 @@ curl -X POST https://seu-projeto.vercel.app/api/auth/register \
 - **Erro de banco**: Verifique variáveis de ambiente
 - **Erro de build**: Execute `npm run build` localmente
 - **Timeout**: Aumente `maxDuration` no `vercel.json`
+- **Erro de functions/builds**: Use apenas `functions` no `vercel.json`
 
 ## 📁 Estrutura Final
 
