@@ -1,11 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
-import authService from '../services/authService';
+import { verifyToken, extractTokenFromHeader, JWTPayload } from '../utils/jwt';
+import User from '../models/User';
 
-// Extender a interface Request para incluir userId
+// Estender a interface Request para incluir o usuário
 declare global {
   namespace Express {
     interface Request {
-      userId?: number;
+      user?: JWTPayload;
     }
   }
 }
@@ -17,38 +18,59 @@ export const authenticateToken = async (
 ): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
-
-    if (!token) {
-      res.status(401).json({ error: 'Token de acesso necessário' });
+    
+    if (!authHeader) {
+      res.status(401).json({ 
+        success: false, 
+        message: 'Token de autenticação não fornecido' 
+      });
       return;
     }
 
-    const decoded = await authService.validateToken(token);
-    req.userId = decoded.userId;
-    next();
-  } catch (error) {
-    res.status(403).json({ error: 'Token inválido' });
-  }
-};
-
-export const optionalAuth = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (token) {
-      const decoded = await authService.validateToken(token);
-      req.userId = decoded.userId;
-    }
+    const token = extractTokenFromHeader(authHeader);
+    const decoded = verifyToken(token);
     
+    // Verificar se o usuário ainda existe no banco
+    const user = await User.findByPk(decoded.userId);
+    if (!user || !user.isActive) {
+      res.status(401).json({ 
+        success: false, 
+        message: 'Usuário não encontrado ou inativo' 
+      });
+      return;
+    }
+
+    req.user = decoded;
     next();
   } catch (error) {
-    // Se o token for inválido, apenas continua sem autenticação
-    next();
+    res.status(401).json({ 
+      success: false, 
+      message: 'Token inválido ou expirado' 
+    });
   }
 };
+
+export const requireRole = (roles: string[]) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (!req.user) {
+      res.status(401).json({ 
+        success: false, 
+        message: 'Usuário não autenticado' 
+      });
+      return;
+    }
+
+    if (!roles.includes(req.user.role)) {
+      res.status(403).json({ 
+        success: false, 
+        message: 'Acesso negado. Permissão insuficiente.' 
+      });
+      return;
+    }
+
+    next();
+  };
+};
+
+export const requireAdmin = requireRole(['admin']);
+export const requireUser = requireRole(['user', 'admin']);

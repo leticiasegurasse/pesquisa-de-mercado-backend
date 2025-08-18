@@ -1,5 +1,5 @@
 import { Model, DataTypes } from 'sequelize';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import sequelize from '../config/database';
 
 interface UserAttributes {
@@ -7,21 +7,21 @@ interface UserAttributes {
   name: string;
   email: string;
   password: string;
+  role?: 'admin' | 'user';
   isActive?: boolean;
-  lastLogin?: Date;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-interface UserCreationAttributes extends Omit<UserAttributes, 'id' | 'isActive' | 'lastLogin' | 'createdAt' | 'updatedAt'> {}
+interface UserCreationAttributes extends Omit<UserAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
 
 class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
   public id!: number;
   public name!: string;
   public email!: string;
   public password!: string;
+  public role!: 'admin' | 'user';
   public isActive!: boolean;
-  public lastLogin!: Date;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 
@@ -31,11 +31,9 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   }
 
   // Hook para hash da senha antes de salvar
-  public static async hashPassword(user: User): Promise<void> {
-    if (user.changed('password')) {
-      const saltRounds = parseInt(process.env.BCRYPT_ROUNDS || '12');
-      user.password = await bcrypt.hash(user.password, saltRounds);
-    }
+  public static async hashPassword(password: string): Promise<string> {
+    const saltRounds = 10;
+    return bcrypt.hash(password, saltRounds);
   }
 }
 
@@ -50,38 +48,50 @@ User.init(
       type: DataTypes.STRING(100),
       allowNull: false,
       validate: {
+        notEmpty: true,
         len: [2, 100]
       }
     },
     email: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.STRING(100),
       allowNull: false,
       unique: true,
       validate: {
-        isEmail: true
+        isEmail: true,
+        notEmpty: true
       }
     },
     password: {
       type: DataTypes.STRING(255),
       allowNull: false,
       validate: {
+        notEmpty: true,
         len: [6, 255]
       }
     },
+    role: {
+      type: DataTypes.ENUM('admin', 'user'),
+      allowNull: false,
+      defaultValue: 'user'
+    },
     isActive: {
       type: DataTypes.BOOLEAN,
+      allowNull: false,
       defaultValue: true
-    },
-    lastLogin: {
-      type: DataTypes.DATE,
-      allowNull: true
     }
   },
   {
     sequelize,
     tableName: 'users',
     hooks: {
-      beforeSave: User.hashPassword
+      beforeCreate: async (user: User) => {
+        user.password = await User.hashPassword(user.password);
+      },
+      beforeUpdate: async (user: User) => {
+        if (user.changed('password')) {
+          user.password = await User.hashPassword(user.password);
+        }
+      }
     }
   }
 );

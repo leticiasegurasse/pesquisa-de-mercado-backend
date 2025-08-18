@@ -1,93 +1,97 @@
-import app from './app';
-import sequelize from './config/database';
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
 import dotenv from 'dotenv';
+import { testConnection, syncDatabase } from './config/database';
+import authRoutes from './routes/auth';
 
+// Carregar variáveis de ambiente
 dotenv.config();
 
-const PORT = Number(process.env.PORT || 3000);
-const HOST = process.env.HOST || '0.0.0.0';
-const isProd = process.env.NODE_ENV === 'production';
-const shouldSyncAlter = !isProd && (process.env.DB_SYNC_ALTER?.toLowerCase() === 'true');
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-let httpServer: ReturnType<typeof app.listen> | null = null;
-let shuttingDown = false;
+// Middlewares de segurança
+app.use(helmet());
 
-// --- Rotas básicas aqui mesmo (podem ficar no app.ts se preferir) ---
-app.get('/health', (_req, res) => {
-  res.status(200).json({ status: 'ok', uptime: process.uptime() });
+// Configuração do CORS
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  credentials: true
+}));
+
+// Middleware para parsing de JSON
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Middleware de logging
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
 });
 
-app.get('/', (_req, res) => {
+// Rotas
+app.use('/api/auth', authRoutes);
+
+// Rota de teste
+app.get('/api/health', (req, res) => {
   res.status(200).json({
-    message: 'API online',
-    env: process.env.NODE_ENV || 'development',
+    success: true,
+    message: 'Servidor funcionando corretamente',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
   });
 });
-// --------------------------------------------------------------------
 
-async function startServer() {
+// Middleware de tratamento de erros
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('Erro não tratado:', err);
+  
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Erro interno do servidor',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
+});
+
+
+// Função para inicializar o servidor
+const startServer = async (): Promise<void> => {
   try {
-    await sequelize.authenticate();
-    console.log('✅ Conexão com o banco de dados estabelecida com sucesso.');
-
-    if (shouldSyncAlter) {
-      await sequelize.sync({ alter: true });
-      console.log('✅ Modelos sincronizados com o banco de dados (dev alter).');
-    } else {
-      console.log('ℹ️ Sync automático desativado. Use migrations para evoluir o schema.');
-    }
-
-    httpServer = app.listen(PORT, HOST, () => {
+    // Testar conexão com o banco de dados
+    await testConnection();
+    
+    // Sincronizar modelos com o banco de dados
+    await syncDatabase();
+    
+    // Iniciar servidor
+    app.listen(PORT, () => {
       console.log(`🚀 Servidor rodando na porta ${PORT}`);
-      console.log(`📊 Health check: http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}/health`);
-      console.log(`🔐 API de autenticação: http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}/api/auth`);
-      console.log(`🌍 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`📊 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🔗 URL: http://localhost:${PORT}`);
+      console.log(`📋 Health Check: http://localhost:${PORT}/api/health`);
     });
-
-    httpServer.on('error', (err) => {
-      console.error('❌ Erro no servidor HTTP:', err);
-      process.exit(1);
-    });
-
   } catch (error) {
-    console.error('❌ Erro ao iniciar o servidor:', error);
+    console.error('❌ Erro ao inicializar servidor:', error);
     process.exit(1);
   }
-}
+};
 
-// === Graceful shutdown com proteção contra chamadas múltiplas ===
-async function shutdown(code = 0) {
-  if (shuttingDown) return;
-  shuttingDown = true;
-
-  try {
-    console.log('\n🛑 Encerrando servidor...');
-    if (httpServer) {
-      await new Promise<void>((resolve, reject) => {
-        httpServer!.close((err?: Error) => (err ? reject(err) : resolve()));
-      });
-      console.log('🧹 HTTP server fechado.');
-    }
-    await sequelize.close();
-    console.log('🧹 Conexão com banco fechada.');
-    process.exit(code);
-  } catch (err) {
-    console.error('❌ Erro no shutdown:', err);
-    process.exit(1);
-  }
-}
-
-process.on('SIGINT', () => shutdown(0));
-process.on('SIGTERM', () => shutdown(0));
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
-  shutdown(1);
+// Tratamento de sinais para encerramento graceful
+process.on('SIGTERM', () => {
+  console.log('🛑 Recebido SIGTERM, encerrando servidor...');
+  process.exit(0);
 });
 
-process.on('uncaughtException', (error) => {
-  console.error('❌ Uncaught Exception:', error);
-  shutdown(1);
+process.on('SIGINT', () => {
+  console.log('🛑 Recebido SIGINT, encerrando servidor...');
+  process.exit(0);
 });
 
-startServer();
+// Iniciar servidor
+if (process.env.NODE_ENV !== 'production') {
+  startServer();
+}
+
+// Exportar app para Vercel
+export default app;
