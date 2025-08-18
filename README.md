@@ -114,7 +114,7 @@ docker-compose down
 
 ### Deploy na Vercel
 
-Para fazer deploy na Vercel, consulte o guia completo: [DEPLOY_VERCEL.md](DEPLOY_VERCEL.md)
+Para fazer deploy na Vercel, consulte o guia completo: [VERCEL_DEPLOY.md](VERCEL_DEPLOY.md)
 
 #### Deploy Rápido
 ```bash
