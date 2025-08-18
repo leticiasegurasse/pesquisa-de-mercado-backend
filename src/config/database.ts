@@ -1,7 +1,4 @@
 import { Sequelize } from 'sequelize';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 const isProd = process.env.NODE_ENV === 'production';
 const shouldSyncAlter =
