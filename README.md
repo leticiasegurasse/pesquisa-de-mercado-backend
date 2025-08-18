@@ -112,13 +112,21 @@ docker-compose logs -f app
 docker-compose down
 ```
 
-#### Script de teste automatizado
-```bash
-# Dar permissão de execução
-chmod +x scripts/docker-build.sh
+### Deploy na Vercel
 
-# Executar teste
-./scripts/docker-build.sh
+Para fazer deploy na Vercel, consulte o guia completo: [DEPLOY_VERCEL.md](DEPLOY_VERCEL.md)
+
+#### Deploy Rápido
+```bash
+# Instalar Vercel CLI
+npm i -g vercel
+
+# Login e deploy
+vercel login
+vercel
+
+# Para produção
+vercel --prod
 ```
 
 ## 📚 API Endpoints
