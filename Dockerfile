@@ -45,7 +45,8 @@ EXPOSE 3000
 
 # Healthcheck para o EasyPanel (usa wget que já vem no alpine)
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-    CMD wget -qO- http://127.0.0.1:3000/health || exit 1
+  CMD sh -c "wget -qO- http://127.0.0.1:${PORT:-3000}/health || exit 1"
+
 
 # Comando de inicialização
 CMD ["node", "dist/server.js"]
