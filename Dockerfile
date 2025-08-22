@@ -8,8 +8,9 @@ WORKDIR /app
 COPY package*.json ./
 COPY tsconfig.json ./
 
-# Instalar dependências
-RUN npm ci --only=production && npm cache clean --force
+# Instalar todas as dependências (incluindo devDependencies para build)
+# TypeScript e outras ferramentas de build são necessárias neste estágio
+RUN npm ci && npm cache clean --force
 
 # Copiar código fonte
 COPY src/ ./src/
