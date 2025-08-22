@@ -43,6 +43,10 @@ COPY --from=builder /app/dist ./dist
 # Copiar arquivo de configuração de ambiente (se necessário)
 COPY config.env ./
 
+# Copiar script de diagnóstico
+COPY scripts/health-check.sh ./scripts/
+RUN chmod +x ./scripts/health-check.sh
+
 # Alterar propriedade dos arquivos para o usuário nodejs
 RUN chown -R nodejs:nodejs /app
 
@@ -61,3 +65,7 @@ ENTRYPOINT ["dumb-init", "--"]
 
 # Comando para iniciar a aplicação
 CMD ["node", "dist/server.js"]
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1

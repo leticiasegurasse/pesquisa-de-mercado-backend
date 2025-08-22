@@ -57,3 +57,6 @@ nodemon.json
 
 # Arquivos Postman
 *.postman_collection.json
+
+# Manter scripts de diagnóstico
+!scripts/health-check.sh

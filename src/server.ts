@@ -58,21 +58,44 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 // Função para inicializar o servidor
 const startServer = async (): Promise<void> => {
   try {
+    console.log('🔄 Iniciando servidor...');
+    console.log(`📊 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🔗 Porta: ${PORT}`);
+    
+    // Verificar variáveis de ambiente críticas
+    console.log('🔍 Verificando variáveis de ambiente...');
+    const requiredEnvVars = ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME', 'JWT_SECRET'];
+    const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+    
+    if (missingVars.length > 0) {
+      console.error('❌ Variáveis de ambiente obrigatórias não configuradas:', missingVars);
+      process.exit(1);
+    }
+    
+    console.log('✅ Variáveis de ambiente configuradas');
+    
     // Testar conexão com o banco de dados
+    console.log('🔍 Testando conexão com banco de dados...');
     await testConnection();
     
     // Sincronizar modelos com o banco de dados
+    console.log('🔄 Sincronizando banco de dados...');
     await syncDatabase();
     
     // Iniciar servidor
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log(`🚀 Servidor rodando na porta ${PORT}`);
-      console.log(`📊 Ambiente: ${process.env.NODE_ENV || 'development'}`);
       console.log(`🔗 URL: http://localhost:${PORT}`);
       console.log(`📋 Health Check: http://localhost:${PORT}/api/health`);
+      console.log(`🔐 Auth Endpoints: http://localhost:${PORT}/api/auth`);
     });
+    
+    // Configurar timeout para o servidor
+    server.timeout = 30000;
+    
   } catch (error) {
     console.error('❌ Erro ao inicializar servidor:', error);
+    console.error('Stack trace:', error instanceof Error ? error.stack : 'N/A');
     process.exit(1);
   }
 };
