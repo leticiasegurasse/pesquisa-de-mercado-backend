@@ -5,44 +5,77 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import sequelize from './config/db';
 import authRoutes from './routes/auth.routes';
-import eventsPagesRoutes from './routes/eventsPage.route';
-import eventsRouter from './routes/events.route';
-import serviceRouter from './routes/service.routes';
-import { serveStaticFiles } from './middlewares/staticFilesMiddleware';
-import testimonialsRoutes from './routes/testimonials.route';
-import ebookRoutes from './routes/ebook.routes';
-import assetsRoutes from './routes/assets.routes';
-import eventCategoryRoutes from "./routes/eventCategory.routes";
-import customersRoutes from "./routes/customers.routes";
-
+import pesquisaRoutes from './routes/pesquisa.routes';
+import { errorHandler, notFoundHandler } from './middlewares/errorMiddleware';
 
 dotenv.config();
 
 const app = express();
 
+// Middlewares de segurança e parsing
 app.use(cors());
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(express.json());
-serveStaticFiles(app);
 
+// Rotas
 app.use('/api/auth', authRoutes);
-app.use('/api', eventsPagesRoutes);
-app.use('/api', eventsRouter)
-app.use('/api', customersRoutes)
-app.use('/api', serviceRouter);
-app.use('/api', testimonialsRoutes);
-app.use('/api/ebooks', ebookRoutes);
-app.use('/api/assets', assetsRoutes);
-app.use('/api/event-categories', eventCategoryRoutes);
+app.use('/api/pesquisas', pesquisaRoutes);
 
+// Rota de teste
+app.get('/', (req, res) => {
+  res.json({ message: 'API de Pesquisa de Mercado funcionando! 🚀' });
+});
 
+// Rota de health check
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    message: 'API funcionando corretamente',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Middleware para rotas não encontradas (deve vir antes do errorHandler)
+app.use(notFoundHandler);
+
+// Middleware de tratamento de erros (deve ser o último)
+app.use(errorHandler);
+
+// Conexão com banco de dados
 sequelize.authenticate()
-  .then(() => console.log('Conexão com o banco de dados estabelecida com sucesso.'))
-  .catch(err => console.error('Não foi possível conectar ao banco de dados:', err));
+  .then(() => console.log('✅ Conexão com o banco de dados estabelecida com sucesso.'))
+  .catch(err => console.error('❌ Não foi possível conectar ao banco de dados:', err));
 
 const PORT = process.env.PORT || '3001';
 
 app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+  console.log(`🚀 Servidor rodando na porta ${PORT}`);
+  console.log(`📝 Endpoints disponíveis:`);
+  console.log(`   🔐 Autenticação:`);
+  console.log(`      POST /api/auth/register - Registrar usuário`);
+  console.log(`      POST /api/auth/login - Fazer login`);
+  console.log(`      POST /api/auth/logout - Fazer logout`);
+  console.log(`      POST /api/auth/refresh - Renovar token`);
+  console.log(`      POST /api/auth/forgot-password - Esqueci a senha`);
+  console.log(`      POST /api/auth/reset-password - Redefinir senha`);
+  console.log(`      GET  /api/auth/verify-token - Verificar token (protegido)`);
+  console.log(`      GET  /api/auth/profile - Perfil do usuário (protegido)`);
+  console.log(`      PUT  /api/auth/profile - Atualizar perfil (protegido)`);
+  console.log(`      POST /api/auth/change-password - Alterar senha (protegido)`);
+  console.log(`   📊 Pesquisas:`);
+  console.log(`      POST /api/pesquisas - Criar pesquisa`);
+  console.log(`      GET  /api/pesquisas - Listar pesquisas`);
+  console.log(`      GET  /api/pesquisas/estatisticas - Estatísticas`);
+  console.log(`      GET  /api/pesquisas/interessados - Apenas interessados`);
+  console.log(`      GET  /api/pesquisas/nao-interessados - Apenas não interessados`);
+  console.log(`      GET  /api/pesquisas/satisfeitos - Apenas satisfeitos`);
+  console.log(`      GET  /api/pesquisas/insatisfeitos - Apenas insatisfeitos`);
+  console.log(`      GET  /api/pesquisas/verificar-whatsapp/:whatsapp - Verificar WhatsApp`);
+  console.log(`      GET  /api/pesquisas/verificar-cpf/:cpf - Verificar CPF`);
+  console.log(`      GET  /api/pesquisas/:id - Buscar pesquisa por ID`);
+  console.log(`   🏥 Sistema:`);
+  console.log(`      GET  /api/health - Health check`);
 });
+
+export default app;

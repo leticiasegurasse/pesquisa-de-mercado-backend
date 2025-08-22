@@ -1,150 +1,245 @@
 
-# **Projeto Backend - Landing Page Dinâmica**
+# API de Autenticação JWT
 
-Este é o backend do projeto de uma **Landing Page Dinâmica** para gerenciar cursos, eventos e e-books, e permitir o processamento de pagamentos com **Stripe**. O backend foi desenvolvido utilizando **Node.js**, **Express**, **TypeScript**, **PostgreSQL** e **Stripe**.
+Uma API simples e robusta para autenticação de usuários usando JWT (JSON Web Tokens) com Node.js, Express, TypeScript e Sequelize.
 
-## **Tecnologias Utilizadas**
+## 🚀 Funcionalidades
 
-- **Node.js**: Ambiente de execução JavaScript.
-- **Express**: Framework web para construção de APIs REST.
-- **TypeScript**: Superset do JavaScript que adiciona tipagem estática.
-- **PostgreSQL**: Banco de dados relacional.
-- **Sequelize**: ORM para interagir com o PostgreSQL.
-- **Stripe**: API para processamento de pagamentos.
-- **dotenv**: Carrega variáveis de ambiente a partir do arquivo `.env`.
+- ✅ Registro de usuários
+- ✅ Login com JWT
+- ✅ Validação de dados
+- ✅ Middleware de autenticação
+- ✅ Tratamento de erros global
+- ✅ Validação de senhas com bcrypt
+- ✅ Tokens JWT seguros
 
-## **Pré-requisitos**
+## 📋 Pré-requisitos
 
-Antes de rodar o projeto, você precisará de algumas dependências instaladas em sua máquina:
+- Node.js (versão 14 ou superior)
+- PostgreSQL
+- npm ou yarn
 
-- **Node.js** (recomenda-se a versão 14 ou superior):  
-  [Download do Node.js](https://nodejs.org/)
-  
-- **PostgreSQL**:  
-  [Download do PostgreSQL](https://www.postgresql.org/download/)
+## 🛠️ Instalação
 
-- **Stripe**: Crie uma conta em [Stripe](https://stripe.com) para obter as credenciais de API (Chave secreta).
-
-## **Configuração do Projeto**
-
-### **1. Clonar o Repositório**
-
-Clone o repositório para sua máquina local:
-
+1. Clone o repositório:
 ```bash
-git clone https://github.com/seu-usuario/landing-page-backend.git
-cd landing-page-backend
+git clone <url-do-repositorio>
+cd backend
 ```
 
-### **2. Instalar as Dependências**
-
-Instale as dependências do projeto utilizando o **npm** (ou **yarn**):
-
+2. Instale as dependências:
 ```bash
 npm install
 ```
 
-### **3. Configuração do Banco de Dados**
-
-1. **Criação do Banco de Dados no PostgreSQL**:
-   
-   Certifique-se de que o PostgreSQL está rodando e crie um banco de dados chamado `site-mileni-db`:
-
-   No **psql** ou no terminal do PostgreSQL:
-
-   ```sql
-   CREATE DATABASE site-mileni-db;
-   ```
-
-2. **Configuração das Variáveis de Ambiente**:
-
-   Crie um arquivo `.env` na raiz do projeto e adicione as variáveis de ambiente necessárias:
-
-   ```env
-   DB_PASSWORD=senha_do_postgres
-   DB_URL=postgres://postgres:senha_do_postgres@localhost:5432/site-mileni-db
-   STRIPE_SECRET_KEY=sua_chave_secreta_da_stripe
-   ```
-
-   - **DB_PASSWORD**: A senha do usuário `postgres` no seu banco de dados PostgreSQL.
-   - **DB_URL**: A URL de conexão com o banco de dados PostgreSQL.
-   - **STRIPE_SECRET_KEY**: A chave secreta da API do Stripe (gerada no painel do Stripe).
-
-### **4. Configuração do Sequelize**
-
-O Sequelize será utilizado para interagir com o banco de dados PostgreSQL. Caso deseje, você pode rodar as migrações e definir o esquema do banco utilizando o Sequelize CLI.
-
-Para configurar o Sequelize, basta garantir que o arquivo de conexão `src/config/db.ts` esteja apontando para o banco de dados correto, usando a URL de conexão armazenada nas variáveis de ambiente.
-
-## **Rodando o Projeto**
-
-### **1. Iniciar o Servidor com Nodemon (Desenvolvimento)**
-
-Use o **Nodemon** para rodar o projeto em modo de desenvolvimento, que irá reiniciar o servidor automaticamente sempre que houver alterações nos arquivos:
-
+3. Configure as variáveis de ambiente:
 ```bash
-npm run dev
+cp .env.example .env
 ```
 
-Isso rodará o servidor na porta 3000 (ou na porta especificada no arquivo `.env`).
+Edite o arquivo `.env` com suas configurações:
+```env
+PORT=3001
+JWT_SECRET=sua_chave_secreta_muito_segura
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=nome_do_banco
+DB_USER=usuario_do_banco
+DB_PASS=senha_do_banco
+NODE_ENV=development
+```
 
-### **2. Iniciar o Servidor em Produção**
-
-Para rodar o servidor em produção, compile o código TypeScript para JavaScript e execute o servidor:
-
+4. Execute as migrações do banco de dados:
 ```bash
+npx sequelize-cli db:migrate
+```
+
+5. Inicie o servidor:
+```bash
+# Desenvolvimento
+npm run dev
+
+# Produção
 npm run build
 npm start
 ```
 
-O servidor estará pronto para ser acessado pela URL `http://localhost:3000`.
+## 📚 Endpoints
 
-### **3. Testando as Rotas**
-
-Após iniciar o servidor, você pode testar as rotas da API, como:
-
-- **GET /courses**: Listar todos os cursos.
-- **POST /courses**: Criar um novo curso.
-- **POST /payment/create-payment-intent**: Criar uma intenção de pagamento usando Stripe.
-
-Use uma ferramenta como **Postman** ou **Insomnia** para testar as rotas da API.
-
-## **Estrutura de Pastas**
-
-A estrutura do projeto é a seguinte:
-
+### Base URL
 ```
-landing-page-backend/
-├── src/
-│   ├── config/
-│   │   └── db.ts           # Configuração da conexão com o banco de dados
-│   ├── controllers/
-│   │   ├── courseController.ts
-│   │   ├── eventController.ts
-│   │   ├── ebookController.ts
-│   │   └── paymentController.ts
-│   ├── models/
-│   │   ├── course.ts
-│   │   ├── event.ts
-│   │   └── ebook.ts
-│   ├── routes/
-│   │   ├── courseRoutes.ts
-│   │   ├── eventRoutes.ts
-│   │   ├── ebookRoutes.ts
-│   │   └── paymentRoutes.ts
-│   ├── middlewares/
-│   │   └── validate.ts    # Validação de dados das requisições
-│   ├── .env              # Variáveis de ambiente
-│   ├── server.ts         # Arquivo principal para rodar o servidor
-├── package.json
-├── tsconfig.json         # Configuração do TypeScript
-└── README.md
+http://localhost:3001/api
 ```
 
-## **Considerações Finais**
+### 1. Registrar Usuário
+**POST** `/auth/register`
 
-- Certifique-se de que o **PostgreSQL** está rodando localmente ou em um servidor de sua preferência.
-- Configure o **Stripe** corretamente e adicione sua **chave secreta** no arquivo `.env`.
-- Verifique as permissões do banco de dados para garantir que o usuário tenha acesso total.
+**Body:**
+```json
+{
+  "username": "usuario123",
+  "password": "senha123",
+  "email": "usuario@email.com" // opcional
+}
+```
 
-Se você tiver mais alguma dúvida sobre como configurar ou rodar o projeto, não hesite em me perguntar!
+**Resposta de Sucesso (201):**
+```json
+{
+  "success": true,
+  "message": "Usuário criado com sucesso!",
+  "data": {
+    "userId": 1,
+    "username": "usuario123",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  }
+}
+```
+
+### 2. Fazer Login
+**POST** `/auth/login`
+
+**Body:**
+```json
+{
+  "username": "usuario123",
+  "password": "senha123"
+}
+```
+
+**Resposta de Sucesso (200):**
+```json
+{
+  "success": true,
+  "message": "Login realizado com sucesso!",
+  "data": {
+    "userId": 1,
+    "username": "usuario123",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  }
+}
+```
+
+### 3. Perfil do Usuário (Protegido)
+**GET** `/auth/profile`
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Resposta de Sucesso (200):**
+```json
+{
+  "success": true,
+  "message": "Perfil acessado com sucesso!",
+  "data": {
+    "userId": 1,
+    "username": "usuario123"
+  }
+}
+```
+
+## 🔐 Autenticação
+
+Para acessar rotas protegidas, inclua o token JWT no header `Authorization`:
+
+```
+Authorization: Bearer <seu_token_jwt>
+```
+
+## 📝 Validações
+
+### Registro
+- Username: 3-50 caracteres, obrigatório
+- Password: 6-255 caracteres, obrigatório
+- Email: formato válido, opcional
+
+### Login
+- Username: obrigatório
+- Password: obrigatório
+
+## 🛡️ Segurança
+
+- Senhas criptografadas com bcrypt (salt rounds: 12)
+- Tokens JWT com expiração de 24 horas
+- Headers de segurança com Helmet
+- Validação de dados de entrada
+- Tratamento de erros sem exposição de informações sensíveis
+
+## 🏗️ Estrutura do Projeto
+
+```
+src/
+├── config/
+│   └── db.ts              # Configuração do banco de dados
+├── controllers/
+│   └── auth.controller.ts # Controladores de autenticação
+├── middlewares/
+│   ├── authMiddleware.ts  # Middleware de autenticação JWT
+│   ├── errorMiddleware.ts # Tratamento de erros
+│   ├── validationMiddleware.ts # Validação de dados
+│   └── asyncMiddleware.ts # Middleware para funções assíncronas
+├── models/
+│   └── user.model.ts      # Modelo de usuário
+├── routes/
+│   └── auth.routes.ts     # Rotas de autenticação
+└── server.ts              # Configuração do servidor
+```
+
+## 🧪 Testando a API
+
+### Com cURL
+
+**Registrar usuário:**
+```bash
+curl -X POST http://localhost:3001/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username": "teste", "password": "123456", "email": "teste@email.com"}'
+```
+
+**Fazer login:**
+```bash
+curl -X POST http://localhost:3001/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "teste", "password": "123456"}'
+```
+
+**Acessar perfil (com token):**
+```bash
+curl -X GET http://localhost:3001/api/auth/profile \
+  -H "Authorization: Bearer <seu_token>"
+```
+
+### Com Postman
+
+Importe a coleção `Milenio_Barros_Backend_API.postman_collection.json` para testar todos os endpoints.
+
+## 🚀 Deploy
+
+### Vercel
+1. Conecte seu repositório ao Vercel
+2. Configure as variáveis de ambiente
+3. Deploy automático
+
+### Docker
+```bash
+docker build -t auth-api .
+docker run -p 3001:3001 auth-api
+```
+
+## 📄 Licença
+
+Este projeto está sob a licença ISC.
+
+## 🤝 Contribuição
+
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
+
+## 📞 Suporte
+
+Para suporte, envie um email para [seu-email@exemplo.com] ou abra uma issue no repositório.

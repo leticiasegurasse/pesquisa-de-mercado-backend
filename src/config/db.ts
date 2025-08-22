@@ -1,41 +1,50 @@
 import { Sequelize } from 'sequelize';
 import dotenv from 'dotenv';
-import path from 'path';
-import fs from 'fs';
 
 dotenv.config();
 
-const dbUrl = process.env.DB_URL as string;
-
-const sequelize = new Sequelize(dbUrl, {
-  dialect: 'postgres',
-  protocol: 'postgres',
-  logging: false,
-});
-
-const modelsPath = path.join(__dirname, '../models');
-fs.readdirSync(modelsPath).forEach((file) => {
-  if (file.endsWith('.ts')) {
-    const model = require(path.join(modelsPath, file)).default;
-    if (model) {
-      model(sequelize);
+// Configuração do banco de dados usando DB_URL ou parâmetros individuais
+const sequelize = new Sequelize(
+    process.env.DB_URL || 
+    `postgres://${process.env.DB_USER || 'postgres'}:${process.env.DB_PASSWORD || 'password'}@${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || '5432'}/${process.env.DB_NAME || 'pesquisa_mercado'}`,
+    {
+        dialect: 'postgres',
+        logging: process.env.NODE_ENV === 'development' ? console.log : false,
+        pool: {
+            max: 5,
+            min: 0,
+            acquire: 30000,
+            idle: 10000
+        },
+        define: {
+            timestamps: true,
+            underscored: true,
+            freezeTableName: true
+        }
     }
-  }
-});
+);
 
+// Importar e registrar modelos
+import UserFactory from '../models/user.model';
+import PesquisaFactory from '../models/pesquisa.model';
 
-sequelize.sync()
-  .then(() => {
-    console.log('Banco de dados sincronizado com sucesso!');
-    // Logar os modelos e tabelas criadas
-    console.log('Modelos sincronizados:', Object.keys(sequelize.models));
-    Object.keys(sequelize.models).forEach(modelName => {
-      const model = sequelize.models[modelName];
-      console.log(`Tabela do modelo ${modelName}:`, model.tableName);
-    });
-  })
-  .catch(err => {
-    console.error('Erro ao sincronizar o banco de dados:', err);
-  });
+const User = UserFactory(sequelize);
+const Pesquisa = PesquisaFactory(sequelize);
 
+// Sincronizar modelos com o banco de dados
+const syncDatabase = async () => {
+    try {
+        await sequelize.sync({ alter: true });
+        console.log('✅ Modelos sincronizados com o banco de dados');
+    } catch (error) {
+        console.error('❌ Erro ao sincronizar modelos:', error);
+    }
+};
+
+// Executar sincronização se não estiver em produção
+if (process.env.NODE_ENV !== 'production') {
+    syncDatabase();
+}
+
+export { sequelize, User, Pesquisa };
 export default sequelize;
