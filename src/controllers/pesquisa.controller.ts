@@ -519,6 +519,49 @@ export const buscarEstatisticas = async (req: Request, res: Response) => {
             where: { satisfacao: { [Op.in]: ['insatisfeito', 'muito_insatisfeito'] } }
         });
 
+        // Calcular valor médio mensal
+        const pesquisasComValor = await Pesquisa.findAll({
+            attributes: ['valor_mensal'],
+            where: {
+                valor_mensal: {
+                    [Op.and]: [
+                        { [Op.ne]: null },
+                        { [Op.ne]: '' },
+                        { [Op.ne]: 'R$ 0,00' },
+                        { [Op.ne]: '0' },
+                        { [Op.ne]: '0,00' }
+                    ]
+                }
+            } as any,
+            raw: true
+        });
+
+        // Função para converter valor string para número
+        const converterValorParaNumero = (valorString: string): number => {
+            // Remove R$, espaços e converte vírgula para ponto
+            const valorLimpo = valorString
+                .replace(/R\$\s*/g, '')
+                .replace(/\s/g, '')
+                .replace(',', '.');
+            
+            const valor = parseFloat(valorLimpo);
+            return isNaN(valor) ? 0 : valor;
+        };
+
+        // Calcular média
+        let mediaValorMensal = 'R$ 0,00';
+        if (pesquisasComValor.length > 0) {
+            const valores = pesquisasComValor
+                .map(item => converterValorParaNumero(item.valor_mensal))
+                .filter(valor => valor > 0);
+            
+            if (valores.length > 0) {
+                const soma = valores.reduce((acc, valor) => acc + valor, 0);
+                const media = soma / valores.length;
+                mediaValorMensal = `R$ ${media.toFixed(2).replace('.', ',')}`;
+            }
+        }
+
         // Converter arrays para objetos
         const satisfacaoObj: Record<string, number> = {};
         porSatisfacao.forEach((item: any) => {
@@ -542,7 +585,7 @@ export const buscarEstatisticas = async (req: Request, res: Response) => {
                 bairro: item.bairro,
                 quantidade: parseInt(item.quantidade)
             })),
-            media_valor_mensal: 'R$ 0,00', // Implementar cálculo se necessário
+            media_valor_mensal: mediaValorMensal,
             interessados,
             nao_interessados: naoInteressados,
             satisfeitos,
