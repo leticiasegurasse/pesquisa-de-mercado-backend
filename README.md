@@ -1,266 +1,150 @@
-# Backend - Pesquisa de Mercado
 
-Backend Node.js com TypeScript, Express, PostgreSQL e JWT para autenticação.
+# **Projeto Backend - Landing Page Dinâmica**
 
-## 🚀 Tecnologias Utilizadas
+Este é o backend do projeto de uma **Landing Page Dinâmica** para gerenciar cursos, eventos e e-books, e permitir o processamento de pagamentos com **Stripe**. O backend foi desenvolvido utilizando **Node.js**, **Express**, **TypeScript**, **PostgreSQL** e **Stripe**.
 
-- **Node.js** - Runtime JavaScript
-- **TypeScript** - Linguagem de programação
-- **Express** - Framework web
-- **PostgreSQL** - Banco de dados
-- **Sequelize** - ORM
-- **JWT** - Autenticação
-- **bcrypt** - Hash de senhas
-- **Helmet** - Segurança
-- **CORS** - Cross-Origin Resource Sharing
+## **Tecnologias Utilizadas**
 
-## 📋 Pré-requisitos
+- **Node.js**: Ambiente de execução JavaScript.
+- **Express**: Framework web para construção de APIs REST.
+- **TypeScript**: Superset do JavaScript que adiciona tipagem estática.
+- **PostgreSQL**: Banco de dados relacional.
+- **Sequelize**: ORM para interagir com o PostgreSQL.
+- **Stripe**: API para processamento de pagamentos.
+- **dotenv**: Carrega variáveis de ambiente a partir do arquivo `.env`.
 
-- Node.js (versão 16 ou superior)
-- PostgreSQL instalado e rodando
-- npm ou yarn
+## **Pré-requisitos**
 
-## 🔧 Instalação
+Antes de rodar o projeto, você precisará de algumas dependências instaladas em sua máquina:
 
-1. **Clone o repositório**
+- **Node.js** (recomenda-se a versão 14 ou superior):  
+  [Download do Node.js](https://nodejs.org/)
+  
+- **PostgreSQL**:  
+  [Download do PostgreSQL](https://www.postgresql.org/download/)
+
+- **Stripe**: Crie uma conta em [Stripe](https://stripe.com) para obter as credenciais de API (Chave secreta).
+
+## **Configuração do Projeto**
+
+### **1. Clonar o Repositório**
+
+Clone o repositório para sua máquina local:
+
 ```bash
-git clone <url-do-repositorio>
-cd backend
+git clone https://github.com/seu-usuario/landing-page-backend.git
+cd landing-page-backend
 ```
 
-2. **Instale as dependências**
+### **2. Instalar as Dependências**
+
+Instale as dependências do projeto utilizando o **npm** (ou **yarn**):
+
 ```bash
 npm install
 ```
 
-3. **Configure as variáveis de ambiente**
+### **3. Configuração do Banco de Dados**
+
+1. **Criação do Banco de Dados no PostgreSQL**:
    
-   Copie o arquivo `config.env` e renomeie para `.env`, então configure suas variáveis:
+   Certifique-se de que o PostgreSQL está rodando e crie um banco de dados chamado `site-mileni-db`:
 
-```bash
-# Configurações do Servidor
-PORT=3000
-NODE_ENV=development
+   No **psql** ou no terminal do PostgreSQL:
 
-# Configurações do PostgreSQL (VPS Hostinger)
-DB_HOST=seu_host_postgres
-DB_PORT=5432
-DB_NAME=seu_nome_banco
-DB_USER=seu_usuario
-DB_PASSWORD=sua_senha
+   ```sql
+   CREATE DATABASE site-mileni-db;
+   ```
 
-# Configurações JWT
-JWT_SECRET=sua_chave_secreta_jwt_muito_segura
-JWT_EXPIRES_IN=24h
+2. **Configuração das Variáveis de Ambiente**:
 
-# Configurações de CORS
-CORS_ORIGIN=http://localhost:3000
-```
+   Crie um arquivo `.env` na raiz do projeto e adicione as variáveis de ambiente necessárias:
 
-## 🗄️ Configuração do Banco de Dados
+   ```env
+   DB_PASSWORD=senha_do_postgres
+   DB_URL=postgres://postgres:senha_do_postgres@localhost:5432/site-mileni-db
+   STRIPE_SECRET_KEY=sua_chave_secreta_da_stripe
+   ```
 
-1. **Crie um banco de dados PostgreSQL**
-```sql
-CREATE DATABASE pesquisa_mercado;
-```
+   - **DB_PASSWORD**: A senha do usuário `postgres` no seu banco de dados PostgreSQL.
+   - **DB_URL**: A URL de conexão com o banco de dados PostgreSQL.
+   - **STRIPE_SECRET_KEY**: A chave secreta da API do Stripe (gerada no painel do Stripe).
 
-2. **Configure as credenciais no arquivo .env**
+### **4. Configuração do Sequelize**
 
-3. **O Sequelize criará as tabelas automaticamente na primeira execução**
+O Sequelize será utilizado para interagir com o banco de dados PostgreSQL. Caso deseje, você pode rodar as migrações e definir o esquema do banco utilizando o Sequelize CLI.
 
-## 🏃‍♂️ Executando o Projeto
+Para configurar o Sequelize, basta garantir que o arquivo de conexão `src/config/db.ts` esteja apontando para o banco de dados correto, usando a URL de conexão armazenada nas variáveis de ambiente.
 
-### Desenvolvimento
+## **Rodando o Projeto**
+
+### **1. Iniciar o Servidor com Nodemon (Desenvolvimento)**
+
+Use o **Nodemon** para rodar o projeto em modo de desenvolvimento, que irá reiniciar o servidor automaticamente sempre que houver alterações nos arquivos:
+
 ```bash
 npm run dev
 ```
 
-### Produção
+Isso rodará o servidor na porta 3000 (ou na porta especificada no arquivo `.env`).
+
+### **2. Iniciar o Servidor em Produção**
+
+Para rodar o servidor em produção, compile o código TypeScript para JavaScript e execute o servidor:
+
 ```bash
 npm run build
 npm start
 ```
 
-## 📡 Endpoints da API
+O servidor estará pronto para ser acessado pela URL `http://localhost:3000`.
 
-### Autenticação
+### **3. Testando as Rotas**
 
-#### POST `/api/auth/register`
-Registra um novo usuário.
+Após iniciar o servidor, você pode testar as rotas da API, como:
 
-**Body:**
-```json
-{
-  "name": "João Silva",
-  "email": "joao@email.com",
-  "password": "123456",
-  "role": "user"
-}
-```
+- **GET /courses**: Listar todos os cursos.
+- **POST /courses**: Criar um novo curso.
+- **POST /payment/create-payment-intent**: Criar uma intenção de pagamento usando Stripe.
 
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Usuário criado com sucesso",
-  "data": {
-    "user": {
-      "id": 1,
-      "name": "João Silva",
-      "email": "joao@email.com",
-      "role": "user",
-      "isActive": true,
-      "createdAt": "2024-01-01T00:00:00.000Z"
-    },
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-  }
-}
-```
+Use uma ferramenta como **Postman** ou **Insomnia** para testar as rotas da API.
 
-#### POST `/api/auth/login`
-Faz login do usuário.
+## **Estrutura de Pastas**
 
-**Body:**
-```json
-{
-  "email": "joao@email.com",
-  "password": "123456"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Login realizado com sucesso",
-  "data": {
-    "user": {
-      "id": 1,
-      "name": "João Silva",
-      "email": "joao@email.com",
-      "role": "user",
-      "isActive": true,
-      "createdAt": "2024-01-01T00:00:00.000Z"
-    },
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-  }
-}
-```
-
-#### GET `/api/auth/profile`
-Obtém o perfil do usuário autenticado.
-
-**Headers:**
-```
-Authorization: Bearer <token>
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "user": {
-      "id": 1,
-      "name": "João Silva",
-      "email": "joao@email.com",
-      "role": "user",
-      "isActive": true,
-      "createdAt": "2024-01-01T00:00:00.000Z"
-    }
-  }
-}
-```
-
-### Health Check
-
-#### GET `/api/health`
-Verifica se o servidor está funcionando.
-
-**Response:**
-```json
-{
-  "success": true,
-  "message": "Servidor funcionando corretamente",
-  "timestamp": "2024-01-01T00:00:00.000Z",
-  "environment": "development"
-}
-```
-
-## 🔐 Autenticação
-
-O sistema usa JWT (JSON Web Tokens) para autenticação. Para acessar rotas protegidas, inclua o token no header:
+A estrutura do projeto é a seguinte:
 
 ```
-Authorization: Bearer <seu_token_jwt>
+landing-page-backend/
+├── src/
+│   ├── config/
+│   │   └── db.ts           # Configuração da conexão com o banco de dados
+│   ├── controllers/
+│   │   ├── courseController.ts
+│   │   ├── eventController.ts
+│   │   ├── ebookController.ts
+│   │   └── paymentController.ts
+│   ├── models/
+│   │   ├── course.ts
+│   │   ├── event.ts
+│   │   └── ebook.ts
+│   ├── routes/
+│   │   ├── courseRoutes.ts
+│   │   ├── eventRoutes.ts
+│   │   ├── ebookRoutes.ts
+│   │   └── paymentRoutes.ts
+│   ├── middlewares/
+│   │   └── validate.ts    # Validação de dados das requisições
+│   ├── .env              # Variáveis de ambiente
+│   ├── server.ts         # Arquivo principal para rodar o servidor
+├── package.json
+├── tsconfig.json         # Configuração do TypeScript
+└── README.md
 ```
 
-## 🛡️ Segurança
+## **Considerações Finais**
 
-- Senhas são hasheadas com bcrypt
-- Headers de segurança com Helmet
-- CORS configurado
-- Validação de entrada
-- Tratamento de erros centralizado
+- Certifique-se de que o **PostgreSQL** está rodando localmente ou em um servidor de sua preferência.
+- Configure o **Stripe** corretamente e adicione sua **chave secreta** no arquivo `.env`.
+- Verifique as permissões do banco de dados para garantir que o usuário tenha acesso total.
 
-## 📁 Estrutura do Projeto
-
-```
-src/
-├── config/
-│   └── database.ts          # Configuração do banco de dados
-├── controllers/
-│   └── authController.ts    # Controllers de autenticação
-├── middleware/
-│   └── auth.ts             # Middleware de autenticação
-├── models/
-│   └── User.ts             # Modelo de usuário
-├── routes/
-│   └── auth.ts             # Rotas de autenticação
-├── utils/
-│   └── jwt.ts              # Utilitários JWT
-└── server.ts               # Arquivo principal do servidor
-```
-
-## 🧪 Testando a API
-
-Você pode usar ferramentas como:
-- **Postman**
-- **Insomnia**
-- **Thunder Client** (VS Code)
-- **curl**
-
-### Exemplo com curl:
-
-```bash
-# Health check
-curl http://localhost:3000/api/health
-
-# Registrar usuário
-curl -X POST http://localhost:3000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Teste","email":"teste@email.com","password":"123456"}'
-
-# Login
-curl -X POST http://localhost:3000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"teste@email.com","password":"123456"}'
-
-# Obter perfil (com token)
-curl -X GET http://localhost:3000/api/auth/profile \
-  -H "Authorization: Bearer <seu_token>"
-```
-
-## 🚀 Próximos Passos
-
-- [ ] Adicionar validação com Joi ou Zod
-- [ ] Implementar refresh tokens
-- [ ] Adicionar rate limiting
-- [ ] Implementar logs estruturados
-- [ ] Adicionar testes unitários
-- [ ] Configurar CI/CD
-- [ ] Adicionar documentação com Swagger
-
-## 📝 Licença
-
-Este projeto está sob a licença ISC.
+Se você tiver mais alguma dúvida sobre como configurar ou rodar o projeto, não hesite em me perguntar!

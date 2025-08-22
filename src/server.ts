@@ -1,115 +1,48 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import morgan from 'morgan';
 import dotenv from 'dotenv';
-import { testConnection, syncDatabase } from './config/database';
-import authRoutes from './routes/auth';
+import sequelize from './config/db';
+import authRoutes from './routes/auth.routes';
+import eventsPagesRoutes from './routes/eventsPage.route';
+import eventsRouter from './routes/events.route';
+import serviceRouter from './routes/service.routes';
+import { serveStaticFiles } from './middlewares/staticFilesMiddleware';
+import testimonialsRoutes from './routes/testimonials.route';
+import ebookRoutes from './routes/ebook.routes';
+import assetsRoutes from './routes/assets.routes';
+import eventCategoryRoutes from "./routes/eventCategory.routes";
+import customersRoutes from "./routes/customers.routes";
 
-// Carregar variáveis de ambiente
+
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-// Middlewares de segurança
+app.use(cors());
 app.use(helmet());
+app.use(morgan('dev'));
+app.use(express.json());
+serveStaticFiles(app);
 
-// Configuração do CORS
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-  credentials: true
-}));
-
-// Middleware para parsing de JSON
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Middleware de logging
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-  next();
-});
-
-// Rotas
 app.use('/api/auth', authRoutes);
+app.use('/api', eventsPagesRoutes);
+app.use('/api', eventsRouter)
+app.use('/api', customersRoutes)
+app.use('/api', serviceRouter);
+app.use('/api', testimonialsRoutes);
+app.use('/api/ebooks', ebookRoutes);
+app.use('/api/assets', assetsRoutes);
+app.use('/api/event-categories', eventCategoryRoutes);
 
-// Rota de teste
-app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'Servidor funcionando corretamente',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
-  });
+
+sequelize.authenticate()
+  .then(() => console.log('Conexão com o banco de dados estabelecida com sucesso.'))
+  .catch(err => console.error('Não foi possível conectar ao banco de dados:', err));
+
+const PORT = process.env.PORT || '3001';
+
+app.listen(PORT, () => {
+  console.log(`Servidor rodando na porta ${PORT}`);
 });
-
-// Middleware de tratamento de erros
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('Erro não tratado:', err);
-  
-  res.status(err.status || 500).json({
-    success: false,
-    message: err.message || 'Erro interno do servidor',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-  });
-});
-
-
-// Função para inicializar o servidor
-const startServer = async (): Promise<void> => {
-  try {
-    console.log('🔄 Iniciando servidor...');
-    console.log(`📊 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🔗 Porta: ${PORT}`);
-    
-    // Verificar variáveis de ambiente críticas
-    console.log('🔍 Verificando variáveis de ambiente...');
-    const requiredEnvVars = ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME', 'JWT_SECRET'];
-    const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
-    
-    if (missingVars.length > 0) {
-      console.error('❌ Variáveis de ambiente obrigatórias não configuradas:', missingVars);
-      process.exit(1);
-    }
-    
-    console.log('✅ Variáveis de ambiente configuradas');
-    
-    // Testar conexão com o banco de dados
-    console.log('🔍 Testando conexão com banco de dados...');
-    await testConnection();
-    
-    // Sincronizar modelos com o banco de dados
-    console.log('🔄 Sincronizando banco de dados...');
-    await syncDatabase();
-    
-    // Iniciar servidor
-    const server = app.listen(PORT, () => {
-      console.log(`🚀 Servidor rodando na porta ${PORT}`);
-      console.log(`🔗 URL: http://localhost:${PORT}`);
-      console.log(`📋 Health Check: http://localhost:${PORT}/api/health`);
-      console.log(`🔐 Auth Endpoints: http://localhost:${PORT}/api/auth`);
-    });
-    
-    // Configurar timeout para o servidor
-    server.timeout = 30000;
-    
-  } catch (error) {
-    console.error('❌ Erro ao inicializar servidor:', error);
-    console.error('Stack trace:', error instanceof Error ? error.stack : 'N/A');
-    process.exit(1);
-  }
-};
-
-// Tratamento de sinais para encerramento graceful
-process.on('SIGTERM', () => {
-  console.log('🛑 Recebido SIGTERM, encerrando servidor...');
-  process.exit(0);
-});
-
-process.on('SIGINT', () => {
-  console.log('🛑 Recebido SIGINT, encerrando servidor...');
-  process.exit(0);
-});
-
-// Iniciar servidor
-startServer();
