@@ -30,26 +30,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Rota raiz
-app.get('/', (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: '🚀 API Pesquisa de Mercado funcionando!',
-    version: '1.0.0',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development',
-    endpoints: {
-      health: '/api/health',
-      auth: {
-        register: '/api/auth/register',
-        login: '/api/auth/login',
-        profile: '/api/auth/profile'
-      }
-    },
-    documentation: 'Consulte o README para mais informações sobre os endpoints'
-  });
-});
-
 // Rotas
 app.use('/api/auth', authRoutes);
 
@@ -78,14 +58,11 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 // Função para inicializar o servidor
 const startServer = async (): Promise<void> => {
   try {
-    // Só inicializar banco se não estiver na Vercel
-    if (!process.env.VERCEL) {
-      // Testar conexão com o banco de dados
-      await testConnection();
-      
-      // Sincronizar modelos com o banco de dados
-      await syncDatabase();
-    }
+    // Testar conexão com o banco de dados
+    await testConnection();
+    
+    // Sincronizar modelos com o banco de dados
+    await syncDatabase();
     
     // Iniciar servidor
     app.listen(PORT, () => {
@@ -112,9 +89,4 @@ process.on('SIGINT', () => {
 });
 
 // Iniciar servidor
-if (process.env.NODE_ENV !== 'production') {
-  startServer();
-}
-
-// Exportar app para Vercel
-export default app;
+startServer();

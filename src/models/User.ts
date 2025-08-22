@@ -1,6 +1,6 @@
 import { Model, DataTypes } from 'sequelize';
 import bcrypt from 'bcrypt';
-import getSequelize from '../config/database';
+import sequelize from '../config/database';
 
 interface UserAttributes {
   id?: number;
@@ -81,7 +81,7 @@ User.init(
     }
   },
   {
-    sequelize: getSequelize(),
+    sequelize,
     tableName: 'users',
     hooks: {
       beforeCreate: async (user: User) => {

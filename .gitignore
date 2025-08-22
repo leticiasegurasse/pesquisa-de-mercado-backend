@@ -4,17 +4,16 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Build output
-dist/
-build/
-
 # Environment variables
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-config.env
+
+# Build output
+dist/
+build/
 
 # Logs
 logs
@@ -97,6 +96,3 @@ Thumbs.db
 
 # TypeScript
 *.tsbuildinfo
-
-# Vercel
-.vercel

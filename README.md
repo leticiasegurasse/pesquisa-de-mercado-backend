@@ -1,28 +1,51 @@
-# Pesquisa de Mercado - Backend API
+# Backend - Pesquisa de Mercado
 
-API backend para sistema de pesquisa de mercado desenvolvida com Node.js, Express, TypeScript e PostgreSQL.
+Backend Node.js com TypeScript, Express, PostgreSQL e JWT para autenticação.
 
-## 🚀 Deploy na Vercel
+## 🚀 Tecnologias Utilizadas
 
-### Pré-requisitos
+- **Node.js** - Runtime JavaScript
+- **TypeScript** - Linguagem de programação
+- **Express** - Framework web
+- **PostgreSQL** - Banco de dados
+- **Sequelize** - ORM
+- **JWT** - Autenticação
+- **bcrypt** - Hash de senhas
+- **Helmet** - Segurança
+- **CORS** - Cross-Origin Resource Sharing
 
-1. Conta na [Vercel](https://vercel.com)
-2. Projeto no GitHub/GitLab/Bitbucket
-3. Banco de dados PostgreSQL configurado
+## 📋 Pré-requisitos
 
-### Configuração das Variáveis de Ambiente
+- Node.js (versão 16 ou superior)
+- PostgreSQL instalado e rodando
+- npm ou yarn
 
-Na Vercel, configure as seguintes variáveis de ambiente:
+## 🔧 Instalação
 
-```env
+1. **Clone o repositório**
+```bash
+git clone <url-do-repositorio>
+cd backend
+```
+
+2. **Instale as dependências**
+```bash
+npm install
+```
+
+3. **Configure as variáveis de ambiente**
+   
+   Copie o arquivo `config.env` e renomeie para `.env`, então configure suas variáveis:
+
+```bash
 # Configurações do Servidor
 PORT=3000
-NODE_ENV=production
+NODE_ENV=development
 
-# Configurações do PostgreSQL
-DB_HOST=seu_host_postgresql
+# Configurações do PostgreSQL (VPS Hostinger)
+DB_HOST=seu_host_postgres
 DB_PORT=5432
-DB_NAME=seu_banco_de_dados
+DB_NAME=seu_nome_banco
 DB_USER=seu_usuario
 DB_PASSWORD=sua_senha
 
@@ -31,94 +54,213 @@ JWT_SECRET=sua_chave_secreta_jwt_muito_segura
 JWT_EXPIRES_IN=24h
 
 # Configurações de CORS
-CORS_ORIGIN=https://seu-frontend.vercel.app
+CORS_ORIGIN=http://localhost:3000
 ```
 
-### Passos para Deploy
+## 🗄️ Configuração do Banco de Dados
 
-1. **Conecte seu repositório à Vercel:**
-   - Acesse [vercel.com](https://vercel.com)
-   - Clique em "New Project"
-   - Importe seu repositório do GitHub
-
-2. **Configure o projeto:**
-   - Framework Preset: `Node.js`
-   - Build Command: `npm run vercel-build`
-   - Output Directory: `dist`
-   - Install Command: `npm install`
-
-3. **Configure as variáveis de ambiente:**
-   - Vá em Settings > Environment Variables
-   - Adicione todas as variáveis listadas acima
-
-4. **Deploy:**
-   - Clique em "Deploy"
-   - Aguarde o build e deploy
-
-### Estrutura do Projeto
-
-```
-backend/
-├── src/
-│   ├── config/
-│   │   └── database.ts
-│   ├── controllers/
-│   │   └── authController.ts
-│   ├── middleware/
-│   │   └── auth.ts
-│   ├── models/
-│   │   └── User.ts
-│   ├── routes/
-│   │   └── auth.ts
-│   ├── types/
-│   ├── utils/
-│   │   └── jwt.ts
-│   └── server.ts
-├── config.env
-├── package.json
-├── tsconfig.json
-├── vercel.json
-└── README.md
+1. **Crie um banco de dados PostgreSQL**
+```sql
+CREATE DATABASE pesquisa_mercado;
 ```
 
-### Scripts Disponíveis
+2. **Configure as credenciais no arquivo .env**
 
-- `npm run dev` - Executa o servidor em modo desenvolvimento
-- `npm run build` - Compila o TypeScript para JavaScript
-- `npm start` - Executa o servidor em produção
-- `npm run vercel-build` - Script específico para build na Vercel
+3. **O Sequelize criará as tabelas automaticamente na primeira execução**
 
-### Endpoints da API
+## 🏃‍♂️ Executando o Projeto
 
-- `GET /api/health` - Health check do servidor
-- `POST /api/auth/register` - Registro de usuário
-- `POST /api/auth/login` - Login de usuário
-- `GET /api/auth/profile` - Perfil do usuário (autenticado)
+### Desenvolvimento
+```bash
+npm run dev
+```
 
-### Banco de Dados
+### Produção
+```bash
+npm run build
+npm start
+```
 
-O projeto utiliza PostgreSQL com Sequelize ORM. Certifique-se de que:
+## 📡 Endpoints da API
 
-1. O banco de dados está acessível publicamente
-2. As credenciais estão corretas
-3. O banco de dados existe e está configurado
+### Autenticação
 
-### Troubleshooting
+#### POST `/api/auth/register`
+Registra um novo usuário.
 
-**Erro de conexão com banco de dados:**
-- Verifique se as variáveis de ambiente estão configuradas corretamente
-- Confirme se o banco de dados está acessível
-- Verifique se as credenciais estão corretas
+**Body:**
+```json
+{
+  "name": "João Silva",
+  "email": "joao@email.com",
+  "password": "123456",
+  "role": "user"
+}
+```
 
-**Erro de build:**
-- Verifique se todas as dependências estão no `package.json`
-- Confirme se o TypeScript está configurado corretamente
-- Verifique se não há erros de sintaxe no código
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Usuário criado com sucesso",
+  "data": {
+    "user": {
+      "id": 1,
+      "name": "João Silva",
+      "email": "joao@email.com",
+      "role": "user",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  }
+}
+```
 
-**Erro de CORS:**
-- Configure corretamente a variável `CORS_ORIGIN` com o domínio do frontend
-- Verifique se o frontend está fazendo requisições para o domínio correto
+#### POST `/api/auth/login`
+Faz login do usuário.
 
-### Suporte
+**Body:**
+```json
+{
+  "email": "joao@email.com",
+  "password": "123456"
+}
+```
 
-Para dúvidas ou problemas, abra uma issue no repositório do projeto.
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Login realizado com sucesso",
+  "data": {
+    "user": {
+      "id": 1,
+      "name": "João Silva",
+      "email": "joao@email.com",
+      "role": "user",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  }
+}
+```
+
+#### GET `/api/auth/profile`
+Obtém o perfil do usuário autenticado.
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": 1,
+      "name": "João Silva",
+      "email": "joao@email.com",
+      "role": "user",
+      "isActive": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    }
+  }
+}
+```
+
+### Health Check
+
+#### GET `/api/health`
+Verifica se o servidor está funcionando.
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Servidor funcionando corretamente",
+  "timestamp": "2024-01-01T00:00:00.000Z",
+  "environment": "development"
+}
+```
+
+## 🔐 Autenticação
+
+O sistema usa JWT (JSON Web Tokens) para autenticação. Para acessar rotas protegidas, inclua o token no header:
+
+```
+Authorization: Bearer <seu_token_jwt>
+```
+
+## 🛡️ Segurança
+
+- Senhas são hasheadas com bcrypt
+- Headers de segurança com Helmet
+- CORS configurado
+- Validação de entrada
+- Tratamento de erros centralizado
+
+## 📁 Estrutura do Projeto
+
+```
+src/
+├── config/
+│   └── database.ts          # Configuração do banco de dados
+├── controllers/
+│   └── authController.ts    # Controllers de autenticação
+├── middleware/
+│   └── auth.ts             # Middleware de autenticação
+├── models/
+│   └── User.ts             # Modelo de usuário
+├── routes/
+│   └── auth.ts             # Rotas de autenticação
+├── utils/
+│   └── jwt.ts              # Utilitários JWT
+└── server.ts               # Arquivo principal do servidor
+```
+
+## 🧪 Testando a API
+
+Você pode usar ferramentas como:
+- **Postman**
+- **Insomnia**
+- **Thunder Client** (VS Code)
+- **curl**
+
+### Exemplo com curl:
+
+```bash
+# Health check
+curl http://localhost:3000/api/health
+
+# Registrar usuário
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Teste","email":"teste@email.com","password":"123456"}'
+
+# Login
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"teste@email.com","password":"123456"}'
+
+# Obter perfil (com token)
+curl -X GET http://localhost:3000/api/auth/profile \
+  -H "Authorization: Bearer <seu_token>"
+```
+
+## 🚀 Próximos Passos
+
+- [ ] Adicionar validação com Joi ou Zod
+- [ ] Implementar refresh tokens
+- [ ] Adicionar rate limiting
+- [ ] Implementar logs estruturados
+- [ ] Adicionar testes unitários
+- [ ] Configurar CI/CD
+- [ ] Adicionar documentação com Swagger
+
+## 📝 Licença
+
+Este projeto está sob a licença ISC.
